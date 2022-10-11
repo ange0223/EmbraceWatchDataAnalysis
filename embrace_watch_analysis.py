@@ -45,33 +45,39 @@ class User:
         # Gets the local time zone for the current user based on the system the software is currently running on.
 
 # GUI for Our project
-# Main settings for frame
-root = tk.Tk()
-root.title("EmbraceWatch Data Analysis")
-root.geometry('900x600+50+50')
-root.resizable(False, False)
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("EmbraceWatch Data Analysis")
+        self.geometry('900x600+50+50')
+        self.resizable(False, False)
 
-# create a menubar
-menubar = Menu(root)
-root.config(menu=menubar)
+        self.create_menubar
+    
+    def create_menubar(self):
+        # create a menubar
+        menubar = Menu(self)
+        self.config(menu=menubar)
 
-# create a menu
-file_menu = Menu(menubar)
+        # create a menu
+        file_menu = Menu(menubar)
 
-# add the File menu to the menubar
-menubar.add_cascade(
-    label="File",
-    menu=file_menu
-)
+        # add the File menu to the menubar
+        menubar.add_cascade(
+            label="File",
+            menu=file_menu
+        )
 
-# add a menu item to the menu
-file_menu.add_command(
-    label='Exit',
-    command=root.destroy
-)
+        # add a menu item to the menu
+        file_menu.add_command(
+            label='Exit',
+            command=root.destroy
+        )
 
 # specifics of what is shown
-ttk.Label(root, text='Themed Label').pack()
-ttk.Button(root, text='Themed Label').pack()
+#ttk.Label(root, text='Themed Label').pack()
+#ttk.Button(root, text='Themed Label').pack()
 
-root.mainloop()
+if __name__ == "__main__":
+    app = App()
+    app.mainloop()
