@@ -51,10 +51,8 @@ class App(tk.Tk):
         self.title("EmbraceWatch Data Analysis")
         self.geometry('900x600+50+50')
         self.resizable(False, False)
-
-        self.create_menubar
-    
-    def create_menubar(self):
+        self.configure(background='#e8f4f8')
+       
         # create a menubar
         menubar = Menu(self)
         self.config(menu=menubar)
@@ -71,10 +69,40 @@ class App(tk.Tk):
         # add a menu item to the menu
         file_menu.add_command(
             label='Exit',
-            command=root.destroy
+            command=self.destroy
         )
 
-# specifics of what is shown
+        users_label = ttk.Label(self, background="#e8f4f8", text="EmbraceWatch User ID:")
+        users_label.grid(column=0, row=0, sticky=tk.W, padx=5, pady=5)
+        
+        start_label = ttk.Label(self, background="#e8f4f8", text="Date Start:")
+        start_label.grid(column=5, row=0, sticky=tk.W, padx=5, pady=5)
+
+        end_label = ttk.Label(self, background="#e8f4f8", text="Date End:")
+        end_label.grid(column=10, row=0, sticky=tk.W, padx=5, pady=5)
+    
+        utc_label = ttk.Label(self, background="#e8f4f8", text="UTC:")
+        utc_label.grid(column=20, row=0, sticky=tk.W, padx=5, pady=5)
+
+        display_label = ttk.Label(self, background="#e8f4f8", text="Fields to Display:")
+        display_label.grid(column=0, row=1, sticky=tk.W, padx=5, pady=5)
+
+        acc_label = ttk.Label(self, background="#e8f4f8", text="ACC Avg Magnitude:")
+        acc_label.grid(column=0, row=2, sticky=tk.W, padx=5, pady=5)
+        
+        eda_label = ttk.Label(self, background="#e8f4f8", text="EDA Avg:")
+        eda_label.grid(column=6, row=2, sticky=tk.W, padx=5, pady=5)
+
+        movement_label = ttk.Label(self, background="#e8f4f8", text="Movement Intensity:")
+        movement_label.grid(column=11, row=2, sticky=tk.W, padx=5, pady=5)
+
+        step_label = ttk.Label(self, background="#e8f4f8", text="Steps:")
+        step_label.grid(column=19, row=2, sticky=tk.W, padx=5, pady=5)
+
+        wrist_label = ttk.Label(self, background="#e8f4f8", text="On Wrist:")
+        wrist_label.grid(column=28, row=2, sticky=tk.W, padx=5, pady=5)
+
+
 #ttk.Label(root, text='Themed Label').pack()
 #ttk.Button(root, text='Themed Label').pack()
 
