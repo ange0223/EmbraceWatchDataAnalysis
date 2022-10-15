@@ -56,10 +56,64 @@ class User:
     # def GetLocalTimeZone():
         # Gets the local time zone for the current user based on the system the software is currently running on.
 
+class MenuLabel(ttk.Label):
+    def __init__(self, parent, font_family='Helvetica', font_size=14,
+                background='#e8f4f8', **kwargs):
+        super().__init__(parent, background='#e8f4f8',
+                         font=(font_family, font_size), **kwargs)
+
+    def grid(self, column=0, row=0, sticky=tk.W, padx=5, pady=5,
+             **kwargs):
+        super().grid(column=column, row=row, sticky=sticky, padx=padx,
+                     pady=pady, **kwargs)
+
+
+class MenuHeader(MenuLabel):
+    def __init__(self, parent, font_size=24, **kwargs):
+        super().__init__(parent, font_size=font_size, **kwargs)
+
+
+class MenuEntry(ttk.Entry):
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, **kwargs)
+
+    def grid(self, column=1, row=0, sticky=tk.W, padx=5, pady=5,
+             **kwargs):
+        super().grid(column=column, row=row, sticky=sticky, padx=padx,
+                     pady=pady, **kwargs)
+
+
+class MenuCheckbutton(ttk.Checkbutton):
+    def __init__(self, parent, **kwargs):
+        self._var = tk.IntVar()
+        super().__init__(parent, variable=self._var,
+                       **kwargs)
+
+    def get(self):
+        return self._var.get()
+
+    def grid(self, column=1, row=0, sticky=tk.W, padx=5, pady=5,
+             **kwargs):
+        super().grid(column=column, row=row, sticky=sticky, padx=padx,
+                     pady=pady, **kwargs)
+
+
+class SubmitButton(ttk.Button):
+    def __init__(self, parent, text='Submit', **kwargs):
+        super().__init__(parent, text=text, **kwargs)
+
+    def grid(self, column=1, row=0, sticky=tk.E, padx=5, pady=5,
+             **kwargs):
+        super().grid(column=column, row=row, stick=sticky, padx=padx,
+                     pady=pady, **kwargs)
+
+
 # GUI for Our project
 class App(tk.Tk):
+
     def __init__(self):
         super().__init__()
+
         self.title("EmbraceWatch Data Analysis")
         self.geometry('900x600+50+50')
         self.resizable(False, False)
@@ -84,53 +138,83 @@ class App(tk.Tk):
             command=self.destroy
         )
 
-        class MenuLabel(ttk.Label):
-            def __init__(self, parent, font_family='Helvetica', font_size=14,
-                        background='#e8f4f8', **kwargs):
-                super().__init__(parent, background='#e8f4f8',
-                                 font=(font_family, font_size), **kwargs)
-
-            def grid(self, column=0, row=0, sticky=tk.W, padx=5, pady=5,
-                     **kwargs):
-                super().grid(column=column, row=row, sticky=sticky, padx=padx,
-                             pady=pady, **kwargs)
-
-        class MenuHeader(MenuLabel):
-            def __init__(self, parent, font_size=24, **kwargs):
-                super().__init__(parent, font_size=font_size, **kwargs)
-
         options_label = MenuHeader(self, text='Options')
         options_label.grid(row=0)
 
         users_label = MenuLabel(self, text="EmbraceWatch User ID(s):")
         users_label.grid(row=1)
 
+        self.users_entry = MenuEntry(self)
+        self.users_entry.grid(row=1)
+
         start_label = MenuLabel(self, text="Date Start:")
         start_label.grid(row=2)
+
+        self.start_entry = MenuEntry(self)
+        self.start_entry.grid(row=2)
 
         end_label = MenuLabel(self, text="Date End:")
         end_label.grid(row=3)
 
+        self.end_entry = MenuEntry(self)
+        self.end_entry.grid(row=3)
+
         utc_label = MenuLabel(self, text="UTC:")
         utc_label.grid(row=4)
 
-        display_label = MenuHeader(self, text="Fields to Display:")
+        self.utc_checkbtn = MenuCheckbutton(self)
+        self.utc_checkbtn.grid(row=4)
+
+        display_label = MenuHeader(self, text="Fields to Display")
         display_label.grid(row=5)
 
         acc_label = MenuLabel(self, text="ACC Avg Magnitude:")
         acc_label.grid(row=6)
 
+        self.acc_checkbtn = MenuCheckbutton(self)
+        self.acc_checkbtn.grid(row=6)
+
         eda_label = MenuLabel(self, text="EDA Avg:")
         eda_label.grid(row=7)
+
+        self.eda_checkbtn = MenuCheckbutton(self)
+        self.eda_checkbtn.grid(row=7)
 
         movement_label = MenuLabel(self, text="Movement Intensity:")
         movement_label.grid(row=8)
 
+        self.movement_checkbtn = MenuCheckbutton(self)
+        self.movement_checkbtn.grid(row=8)
+
         step_label = MenuLabel(self, text="Steps:")
         step_label.grid(row=9)
 
+        self.step_checkbtn = MenuCheckbutton(self)
+        self.step_checkbtn.grid(row=9)
+
         wrist_label = MenuLabel(self, text="On Wrist:")
         wrist_label.grid(row=10)
+
+        self.wrist_checkbtn = MenuCheckbutton(self)
+        self.wrist_checkbtn.grid(row=10)
+
+        submit_btn = SubmitButton(self, command=self.print_entries)
+        submit_btn.grid(row=11)
+
+    def print_entries(self):
+        '''
+        Simple function to use as placeholder submit command.
+        Also stands as an example of how to retrieve input.
+        '''
+        print('\nusers_entry: "{}"'.format(self.users_entry.get()))
+        print('start_entry: "{}"'.format(self.start_entry.get()))
+        print('end_entry: "{}"'.format(self.end_entry.get()))
+        print('utc_checkbtn: {}'.format(self.utc_checkbtn.get()))
+        print('acc_checkbtn: {}'.format(self.acc_checkbtn.get()))
+        print('eda_checkbtn: {}'.format(self.eda_checkbtn.get()))
+        print('movement_checkbtn: {}'.format(self.movement_checkbtn.get()))
+        print('step_checkbtn: {}'.format(self.step_checkbtn.get()))
+        print('wrist_checkbtn: {}'.format(self.wrist_checkbtn.get()))
 
 
 #ttk.Label(root, text='Themed Label').pack()
