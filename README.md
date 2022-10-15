@@ -22,4 +22,6 @@ Unix-like: `source venv/bin/activate`
 `pip install -r requirements.txt`
 
 ## Run
-`python main.py`
+Windows: `python src\main.py`
+
+Unix-like: `python3 src/main.py`
