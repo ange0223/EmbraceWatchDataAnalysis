@@ -98,7 +98,7 @@ class MenuCheckbutton(ttk.Checkbutton):
                      pady=pady, **kwargs)
 
 
-class SubmitButton(ttk.Button):
+class MenuSubmitButton(ttk.Button):
     def __init__(self, parent, text='Submit', **kwargs):
         super().__init__(parent, text=text, **kwargs)
 
@@ -198,7 +198,7 @@ class App(tk.Tk):
         self.wrist_checkbtn = MenuCheckbutton(self)
         self.wrist_checkbtn.grid(row=10)
 
-        submit_btn = SubmitButton(self, command=self.print_entries)
+        submit_btn = MenuSubmitButton(self, command=self.print_entries)
         submit_btn.grid(row=11)
 
     def print_entries(self):
