@@ -7,6 +7,7 @@ def load_summary(csv_path):
     '''
     Load data from summary.csv file for a single day/subject and
     return result as a pandas dataframe.
+    Note that the returned dataframe does not have any subject ID column.
     Args:
         csv_path: path to the 'summary.csv' file to load
     '''
