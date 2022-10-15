@@ -84,35 +84,53 @@ class App(tk.Tk):
             command=self.destroy
         )
 
-        users_label = ttk.Label(self, background="#e8f4f8", text="EmbraceWatch User ID:")
-        users_label.grid(column=0, row=0, sticky=tk.W, padx=5, pady=5)
+        class MenuLabel(ttk.Label):
+            def __init__(self, parent, font_family='Helvetica', font_size=14,
+                        background='#e8f4f8', **kwargs):
+                super().__init__(parent, background='#e8f4f8',
+                                 font=(font_family, font_size), **kwargs)
 
-        start_label = ttk.Label(self, background="#e8f4f8", text="Date Start:")
-        start_label.grid(column=5, row=0, sticky=tk.W, padx=5, pady=5)
+            def grid(self, column=0, row=0, sticky=tk.W, padx=5, pady=5,
+                     **kwargs):
+                super().grid(column=column, row=row, sticky=sticky, padx=padx,
+                             pady=pady, **kwargs)
 
-        end_label = ttk.Label(self, background="#e8f4f8", text="Date End:")
-        end_label.grid(column=10, row=0, sticky=tk.W, padx=5, pady=5)
+        class MenuHeader(MenuLabel):
+            def __init__(self, parent, font_size=24, **kwargs):
+                super().__init__(parent, font_size=font_size, **kwargs)
 
-        utc_label = ttk.Label(self, background="#e8f4f8", text="UTC:")
-        utc_label.grid(column=20, row=0, sticky=tk.W, padx=5, pady=5)
+        options_label = MenuHeader(self, text='Options')
+        options_label.grid(row=0)
 
-        display_label = ttk.Label(self, background="#e8f4f8", text="Fields to Display:")
-        display_label.grid(column=0, row=1, sticky=tk.W, padx=5, pady=5)
+        users_label = MenuLabel(self, text="EmbraceWatch User ID(s):")
+        users_label.grid(row=1)
 
-        acc_label = ttk.Label(self, background="#e8f4f8", text="ACC Avg Magnitude:")
-        acc_label.grid(column=0, row=2, sticky=tk.W, padx=5, pady=5)
+        start_label = MenuLabel(self, text="Date Start:")
+        start_label.grid(row=2)
 
-        eda_label = ttk.Label(self, background="#e8f4f8", text="EDA Avg:")
-        eda_label.grid(column=6, row=2, sticky=tk.W, padx=5, pady=5)
+        end_label = MenuLabel(self, text="Date End:")
+        end_label.grid(row=3)
 
-        movement_label = ttk.Label(self, background="#e8f4f8", text="Movement Intensity:")
-        movement_label.grid(column=11, row=2, sticky=tk.W, padx=5, pady=5)
+        utc_label = MenuLabel(self, text="UTC:")
+        utc_label.grid(row=4)
 
-        step_label = ttk.Label(self, background="#e8f4f8", text="Steps:")
-        step_label.grid(column=19, row=2, sticky=tk.W, padx=5, pady=5)
+        display_label = MenuHeader(self, text="Fields to Display:")
+        display_label.grid(row=5)
 
-        wrist_label = ttk.Label(self, background="#e8f4f8", text="On Wrist:")
-        wrist_label.grid(column=28, row=2, sticky=tk.W, padx=5, pady=5)
+        acc_label = MenuLabel(self, text="ACC Avg Magnitude:")
+        acc_label.grid(row=6)
+
+        eda_label = MenuLabel(self, text="EDA Avg:")
+        eda_label.grid(row=7)
+
+        movement_label = MenuLabel(self, text="Movement Intensity:")
+        movement_label.grid(row=8)
+
+        step_label = MenuLabel(self, text="Steps:")
+        step_label.grid(row=9)
+
+        wrist_label = MenuLabel(self, text="On Wrist:")
+        wrist_label.grid(row=10)
 
 
 #ttk.Label(root, text='Themed Label').pack()
