@@ -1,5 +1,5 @@
-#import pandas
-#import random
+import pandas
+import random
 #from datetime import datetime
 #from pytz import timezone
 import tkinter as tk
@@ -22,17 +22,17 @@ class WatchData:
         # Returns data between two DateTimes. If no arguments given, returns the entire dataset.
 
     # def GetPersonData(person_id):
-        # Returns data from a specific Person 
-    
+        # Returns data from a specific Person
+
     # def GetPeopleData(id_arr):
-        # Returns data from several people 
+        # Returns data from several people
 
     # def UpdateDisplayTimeZone(self, timezone):
         # Updates Display Timezone field with the currently selected timezone.
 
     # def GraphData():
-        # Graphs the data to a line graph. 
-    
+        # Graphs the data to a line graph.
+
     # def Analyze():
         # Readies the user selected data for viewing in the Analysis window
 
@@ -52,7 +52,7 @@ class App(tk.Tk):
         self.geometry('900x600+50+50')
         self.resizable(False, False)
         self.configure(background='#e8f4f8')
-       
+
         # create a menubar
         menubar = Menu(self)
         self.config(menu=menubar)
@@ -74,13 +74,13 @@ class App(tk.Tk):
 
         users_label = ttk.Label(self, background="#e8f4f8", text="EmbraceWatch User ID:")
         users_label.grid(column=0, row=0, sticky=tk.W, padx=5, pady=5)
-        
+
         start_label = ttk.Label(self, background="#e8f4f8", text="Date Start:")
         start_label.grid(column=5, row=0, sticky=tk.W, padx=5, pady=5)
 
         end_label = ttk.Label(self, background="#e8f4f8", text="Date End:")
         end_label.grid(column=10, row=0, sticky=tk.W, padx=5, pady=5)
-    
+
         utc_label = ttk.Label(self, background="#e8f4f8", text="UTC:")
         utc_label.grid(column=20, row=0, sticky=tk.W, padx=5, pady=5)
 
@@ -89,7 +89,7 @@ class App(tk.Tk):
 
         acc_label = ttk.Label(self, background="#e8f4f8", text="ACC Avg Magnitude:")
         acc_label.grid(column=0, row=2, sticky=tk.W, padx=5, pady=5)
-        
+
         eda_label = ttk.Label(self, background="#e8f4f8", text="EDA Avg:")
         eda_label.grid(column=6, row=2, sticky=tk.W, padx=5, pady=5)
 
