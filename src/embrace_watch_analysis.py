@@ -1,4 +1,4 @@
-import pandas
+import pandas as pd
 import random
 #from datetime import datetime
 #from pytz import timezone
@@ -15,8 +15,20 @@ class Person:
         self.id = random.random()
 
 class WatchData:
-    def _init_(self, id, person_id, date_time_utc, current_time_zone, avg_magnitude, avg_eda, avg_temp, movement_intensity, steps, rest, on_wrist):
+    def _init_(self, id, person_id, date_time_utc, current_time_zone,
+                avg_magnitude, avg_eda, avg_temp, movement_intensity,
+                steps, rest, on_wrist):
         self.id = random.random()
+        self.person_id = person_id
+        self.date_time_utc = date_time_utc
+        self.current_time_zone = current_time_zone
+        self.avg_magnitude = avg_magnitude
+        self.avg_eda = avg_eda
+        self.avg_temp = avg_temp
+        self.movement_intensity = movement_intensity
+        self.steps = steps
+        self.rest = rest
+        self.on_wrist = on_wrist
 
     # def GetBtwn(date_time_start, date_time_end):
         # Returns data between two DateTimes. If no arguments given, returns the entire dataset.
