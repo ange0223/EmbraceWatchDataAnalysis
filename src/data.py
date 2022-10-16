@@ -38,7 +38,7 @@ def load_data(data_path, subs=None):
     try:
         day_dirs = os.listdir(data_path)
     except FileNotFoundError as e:
-        print('Data path "{}" not found.'.format(path))
+        print('Data path "{}" not found.'.format(data_path))
         return None
     # Empty dataframe to store accumulated data
     data = pd.DataFrame()
@@ -46,7 +46,7 @@ def load_data(data_path, subs=None):
         day_path = os.path.join(data_path, day_dir)
         for sub_dir in os.listdir(day_path):
             # Only care if sub is one that was requested
-            if subs is not None and sub_dir not in subs:
+            if subs is not None and int(sub_dir) not in subs:
                 continue
             sub_path = os.path.join(day_path, sub_dir)
             summary_path = os.path.join(sub_path, 'summary.csv')
@@ -88,7 +88,7 @@ if __name__ == '__main__':
     print('data_path: "{}"'.format(data_path))
     print('subs: "{}"'.format(subs))
     if subs:
-        subs = subs.split(',')
+        subs = map(int, subs.split(','))
         data = load_data(data_path, subs=subs)
     else: data = load_data(data_path)
     print('\ndata.head():')
