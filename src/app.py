@@ -6,6 +6,8 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import Menu
 
+from displayapp import DisplayApp
+
 fmt = "%Y-%m-%d %H:%M:%S"
 
 # Classes from SRS document
