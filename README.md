@@ -4,8 +4,11 @@ University of Louisville Project that involves creating software for analyzing E
 
 
 ## Setup
+Clone repo to desired location
+`git clone https://github.com/ange0223/EmbraceWatchDataAnalysis.git`
+
 CD into repo directory
-`cd <...>/EmbraceWatchDataAnalysis`
+`cd EmbraceWatchDataAnalysis`
 
 ### Setup virtual environment
 Windows: `python -m venv venv`
@@ -18,7 +21,7 @@ Windows: `.\venv\scripts\activate`
 
 Unix-like: `source venv/bin/activate`
 
-### Install packages
+### Install required packages
 `pip install -r requirements.txt`
 
 ## Executing
