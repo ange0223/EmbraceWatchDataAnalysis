@@ -1,4 +1,4 @@
-from embrace_watch_analysis import App
+from app import App
 
 
 def main():
