@@ -33,10 +33,10 @@ Unix-like: `python3 src/main.py`
 ### Run data.py (basic test)
 Windows: `python src\data.py`
 
-Unix-like: `python3 src\data.py`
+Unix-like: `python3 src/data.py`
 
 
 ### Run data.py (quick test: Dataset dir, all subjects)
 Windows: `python src\data.py -q` or `python src\data.py --quick`
 
-Unix-like: `python3 src\data.py -q` or `python3 src\data.py --quick`
+Unix-like: `python3 src/data.py -q` or `python3 src/data.py --quick`
