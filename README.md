@@ -40,3 +40,9 @@ Unix-like: `python3 src/data.py`
 Windows: `python src\data.py -q` or `python src\data.py --quick`
 
 Unix-like: `python3 src/data.py -q` or `python3 src/data.py --quick`
+
+
+### Run displayapp.py (basic test)
+Windows: `python src\displayapp.py`
+
+Unix-like: `python3 src/displayapp.py`
