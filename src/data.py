@@ -28,6 +28,8 @@ def load_summary(csv_path):
 
 
 def load_data(data_path, subs=None):
+    #print(len(subs))
+
     '''
     Load data from `data_path` for given `subs` (subjects -- all if not set)
     and return as pandas dataframe.
@@ -80,7 +82,7 @@ if __name__ == '__main__':
         sys.exit(1)
     if quick_check:
         data_path = ''
-        subs = ''
+        subs = '310'
     else:
         data_path = input('Please enter data path (blank: Dataset): ')
         subs = input('Please enter subjects (blank: all) (Ex: 310,311): ')
@@ -88,7 +90,7 @@ if __name__ == '__main__':
     print('data_path: "{}"'.format(data_path))
     print('subs: "{}"'.format(subs))
     if subs:
-        subs = map(int, subs.split(','))
+        subs = list(map(int, subs.split(',')))
         data = load_data(data_path, subs=subs)
     else: data = load_data(data_path)
     print('\ndata.head():')
