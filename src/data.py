@@ -22,7 +22,7 @@ def load_summary(csv_path):
         'Movement intensity': 'int64',
         'Steps count': 'int64',
         'Rest': 'int64',
-        'On Wrist': 'bool'
+        'On Wrist': 'int'
     })
     return df
 

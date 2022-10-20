@@ -85,7 +85,6 @@ class DisplayApp(tk.Tk):
         fig_size = (9, 4)
         fig_dpi = 100
         for col_name in sorted(figure_cols):
-            subject = subject.astype({'On Wrist': 'int'})
             fig = Figure(figsize=fig_size, dpi=fig_dpi)
             ax = fig.add_subplot(111)
             subject.plot(x='Datetime (UTC)', y=col_name, ax=ax)
