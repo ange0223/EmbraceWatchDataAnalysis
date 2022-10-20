@@ -222,8 +222,6 @@ class App(tk.Tk):
     def open_display_app(self):
         options = self.get_options()
         top = DisplayApp(options)
-        top.geometry('180x100')
-        top.title('toplevel')
         top.mainloop()
 
     def print_entries(self):

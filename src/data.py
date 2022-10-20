@@ -27,13 +27,15 @@ def load_summary(csv_path):
     return df
 
 
-def load_data(data_path, subs=None):
+def load_data(data_path, users=None, start_time=None, end_time=None,
+              utc_mode=True, show_acc=True, show_eda=True, show_movement=True,
+              show_step=True, show_wrist=True):
     '''
     Load data from `data_path` for given `subs` (subjects -- all if not set)
     and return as pandas dataframe.
     Args:
         data_path: path to root level of dataset directory
-        subs: list of subjects (default: None -- include all)
+        users: list of subjects (default: None -- include all)
     '''
     try:
         day_dirs = os.listdir(data_path)
@@ -46,7 +48,7 @@ def load_data(data_path, subs=None):
         day_path = os.path.join(data_path, day_dir)
         for sub_dir in os.listdir(day_path):
             # Only care if sub is one that was requested
-            if subs is not None and int(sub_dir) not in subs:
+            if users is not None and int(sub_dir) not in users:
                 continue
             sub_path = os.path.join(day_path, sub_dir)
             summary_path = os.path.join(sub_path, 'summary.csv')
@@ -58,6 +60,27 @@ def load_data(data_path, subs=None):
             day_subject['subject_id'] = int(sub_dir)
             # Add to data dataframe
             data = pd.concat([data, day_subject])
+    if start_time:
+        data = data[data['Datetime (UTC)'] > start_time]
+    if end_time:
+        data = data[data['Datetime (UTC)'] < end_time]
+    if not utc_mode:
+        def time_shift(row):
+            dt = row['Datetime (UTC)']
+            offset = pd.DateOffset(minutes=row['Timezone (minutes)'])
+            row['Datetime (UTC)'] = dt + offset
+            return row
+        data = data.apply(time_shift, axis=1)
+    if not show_acc:
+        del data['Acc magnitude avg']
+    if not show_eda:
+        del data['Eda avg']
+    if not show_movement:
+        del data['Movement intensity']
+    if not show_step:
+        del data['Steps count']
+    if not show_wrist:
+        del data['On Wrist']
     return data
 
 
@@ -80,16 +103,16 @@ if __name__ == '__main__':
         sys.exit(1)
     if quick_check:
         data_path = ''
-        subs = ''
+        users = ''
     else:
         data_path = input('Please enter data path (blank: Dataset): ')
-        subs = input('Please enter subjects (blank: all) (Ex: 310,311): ')
+        users = input('Please enter subjects (blank: all) (Ex: 310,311): ')
     if len(data_path) == 0: data_path = 'Dataset'
     print('data_path: "{}"'.format(data_path))
-    print('subs: "{}"'.format(subs))
-    if subs:
-        subs = list(map(int, subs.split(',')))
-        data = load_data(data_path, subs=subs)
+    print('users: "{}"'.format(users))
+    if users:
+        users = list(map(int, users.split(',')))
+        data = load_data(data_path, users=users)
     else: data = load_data(data_path)
     print('\ndata.head():')
     print(data.head())

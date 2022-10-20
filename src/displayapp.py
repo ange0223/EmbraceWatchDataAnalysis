@@ -17,11 +17,8 @@ class DisplayApp(tk.Tk):
 
     def __init__(self, options, data_path=DEFAULT_DATA_PATH):
         super().__init__()
-        self.data_path = data_path
-        # This is just more convenient for how App currently passes options
-        for name, value in options.items():
-            setattr(self, name, value)
-        self.data = self.load_data()
+        # Use provided data_path and data options to load data
+        self.data = load_data(data_path, **options)
         self.title('Data Analyzer')
         self.geometry('900x600+50+50')
         self.resizable(True, True)
@@ -61,35 +58,6 @@ class DisplayApp(tk.Tk):
         data_plot.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
 
-    def load_data(self):
-        '''
-        Load data using data.load_data, then remove some stuff
-        based on the options provided to __init__().
-        '''
-        data = load_data(self.data_path, subs=self.users)
-        data = data[data['subject_id'].isin(self.users)]
-        data = data[data['Datetime (UTC)'] > self.start_time]
-        data = data[data['Datetime (UTC)'] < self.end_time]
-        if not self.utc_mode:
-            def time_shift(row):
-                dt = row['Datetime (UTC)']
-                offset = pd.DateOffset(minutes=row['Timezone (minutes)'])
-                row['Datetime (UTC)'] = dt + offset
-                return row
-            data = data.apply(time_shift, axis=1)
-        if not self.show_acc:
-            del data['Acc magnitude avg']
-        if not self.show_eda:
-            del data['Eda avg']
-        if not self.show_movement:
-            del data['Movement intensity']
-        if not self.show_step:
-            del data['Steps count']
-        if not self.show_wrist:
-            del data['On Wrist']
-        return data
-
-
 
 
 if __name__ == '__main__':
@@ -106,6 +74,8 @@ if __name__ == '__main__':
         'show_wrist': 0
     }
     app = DisplayApp(options)
+    print('\napp.data.info():')
     print(app.data.info())
+    print('\napp.data.iloc[0]:')
     print(app.data.iloc[0])
-    #app.mainloop()
+    app.mainloop()
