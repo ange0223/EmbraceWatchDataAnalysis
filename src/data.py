@@ -24,6 +24,8 @@ def load_summary(csv_path):
         'Rest': 'int64',
         'On Wrist': 'int'
     })
+    # Rename 'Datetime (UTC)' to 'Datetime'
+    df = df.rename(columns={'Datetime (UTC)': 'Datetime'})
     return df
 
 
@@ -61,14 +63,14 @@ def load_data(data_path, users=None, start_time=None, end_time=None,
             # Add to data dataframe
             data = pd.concat([data, day_subject])
     if start_time:
-        data = data[data['Datetime (UTC)'] > start_time]
+        data = data[data['Datetime'] > start_time]
     if end_time:
-        data = data[data['Datetime (UTC)'] < end_time]
+        data = data[data['Datetime'] < end_time]
     if not utc_mode:
         def time_shift(row):
-            dt = row['Datetime (UTC)']
+            dt = row['Datetime']
             offset = pd.DateOffset(minutes=row['Timezone (minutes)'])
-            row['Datetime (UTC)'] = dt + offset
+            row['Datetime'] = dt + offset
             return row
         data = data.apply(time_shift, axis=1)
     if not show_acc:
