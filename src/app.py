@@ -176,26 +176,6 @@ class App(tk.Tk):
         top = DisplayApp(options)
         top.mainloop()
 
-    def print_entries(self):
-        '''
-        Simple function to use as placeholder submit command.
-        Also stands as an example of how to retrieve input.
-
-        This function isn't really necessary anymore. Should be removed at end
-        '''
-        print('\nusers_entry: "{}"'.format(self.users_entry.get()))
-        print('start_entry: "{}"'.format(self.start_entry.get()))
-        print('end_entry: "{}"'.format(self.end_entry.get()))
-        print('utc_checkbtn: {}'.format(self.utc_checkbtn.get()))
-        print('acc_checkbtn: {}'.format(self.acc_checkbtn.get()))
-        print('eda_checkbtn: {}'.format(self.eda_checkbtn.get()))
-        print('movement_checkbtn: {}'.format(self.movement_checkbtn.get()))
-        print('step_checkbtn: {}'.format(self.step_checkbtn.get()))
-        print('wrist_checkbtn: {}'.format(self.wrist_checkbtn.get()))
-
-
-#ttk.Label(root, text='Themed Label').pack()
-#ttk.Button(root, text='Themed Label').pack()
 
 if __name__ == "__main__":
     app = App()
