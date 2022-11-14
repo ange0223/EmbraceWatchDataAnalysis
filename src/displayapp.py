@@ -18,18 +18,22 @@ class ScrollableLabelFrame(ttk.LabelFrame):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         canvas = tk.Canvas(self)
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        scrollbar = ttk.Scrollbar(self, orient='vertical', command=canvas.yview)
         self.scrollable_frame = ttk.Frame(canvas)
+        # Configure event triggered anytime the window is changed or mouse
+        # clicked
         self.scrollable_frame.bind(
-            "<Configure>",
+            '<Configure>',
             lambda e: canvas.configure(
-                scrollregion=canvas.bbox("all")
+                # set canvas scroll region to the bounding box of all items
+                # within the canvas
+                scrollregion=canvas.bbox('all')
             )
         )
-        canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        canvas.create_window((0, 0), window=self.scrollable_frame, anchor='nw')
         canvas.configure(yscrollcommand=scrollbar.set)
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side='left', fill='both', expand=True)
+        scrollbar.pack(side='right', fill='y')
 
 
 class DisplayApp(tk.Tk):
@@ -59,7 +63,7 @@ class DisplayApp(tk.Tk):
             label='Placeholder',
             command=lambda : print('analysis menu')
         )
-        menubar.add_cascade(label="Data", menu=data_menu)
+        menubar.add_cascade(label='Data', menu=data_menu)
         menubar.add_cascade(label='Time Series', menu=time_series_menu)
         menubar.add_cascade(label='Analysis', menu=analysis_menu)
 

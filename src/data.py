@@ -30,8 +30,9 @@ def load_summary(csv_path):
 
 
 def load_data(data_path, users=None, start_time=None, end_time=None,
-              utc_mode=True, show_acc=True, show_eda=True, show_movement=True,
-              show_step=True, show_wrist=True):
+              utc_mode=True, show_acc=True, show_eda=True, show_temp=True,
+              show_movement=True, show_step=True, show_rest=True,
+              show_wrist=True):
     '''
     Load data from `data_path` for given `subs` (subjects -- all if not set)
     and return as pandas dataframe.
@@ -77,10 +78,14 @@ def load_data(data_path, users=None, start_time=None, end_time=None,
         del data['Acc magnitude avg']
     if not show_eda:
         del data['Eda avg']
+    if not show_temp:
+        del data['Temp avg']
     if not show_movement:
         del data['Movement intensity']
     if not show_step:
         del data['Steps count']
+    if not show_rest:
+        del data['Rest']
     if not show_wrist:
         del data['On Wrist']
     return data
