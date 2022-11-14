@@ -36,8 +36,27 @@ class ScrollableLabelFrame(ttk.LabelFrame):
         scrollbar.pack(side='right', fill='y')
 
 
-class DisplayApp(tk.Tk):
+class DataMenu(Menu):
+    def __init__(self, parent, on_import=None, on_export=None, on_clear=None):
+        super().__init__(parent)
+        self.add_command(label='Import', command=on_import)
+        self.add_command(label='Export', command=on_export)
+        self.add_command(label='Clear', command=on_clear)
 
+
+class TimeSeriesMenu(Menu):
+    def __init__(self, parent, on_placeholder=None):
+        super().__init__(parent)
+        self.add_command(label='Placeholder', command=on_placeholder)
+
+
+class AnalysisMenu(Menu):
+    def __init__(self, parent, on_placeholder=None):
+        super().__init__(parent)
+        self.add_command(label='Placeholder', command=on_placeholder)
+
+
+class DisplayApp(tk.Tk):
     def __init__(self, options, data_path=DEFAULT_DATA_PATH):
         super().__init__()
         # Use provided data_path and data options to load data
@@ -48,24 +67,24 @@ class DisplayApp(tk.Tk):
         self.configure(background='#e8f4f8')
 
         menubar = Menu(self)
-        self.config(menu=menubar)
-        data_menu = Menu(menubar)
-        data_menu.add_command(
-            label='Placeholder',
-            command=lambda : print('data menu'))
-        time_series_menu = Menu(menubar)
-        time_series_menu.add_command(
-            label='Placeholder',
-            command=lambda : print('time series menu')
+        data_menu = DataMenu(
+            menubar,
+            on_import=lambda : print('Data > Import pressed'),
+            on_export=lambda : print('Data > Export pressed'),
+            on_clear=lambda : print('Data > Clear pressed')
         )
-        analysis_menu = Menu(menubar)
-        analysis_menu.add_command(
-            label='Placeholder',
-            command=lambda : print('analysis menu')
+        time_series_menu = TimeSeriesMenu(
+            menubar,
+            on_placeholder=lambda : print('Time Series > Placeholder pressed')
+        )
+        analysis_menu = AnalysisMenu(
+            menubar,
+            on_placeholder=lambda : print('Analysis > Placeholder pressed')
         )
         menubar.add_cascade(label='Data', menu=data_menu)
         menubar.add_cascade(label='Time Series', menu=time_series_menu)
         menubar.add_cascade(label='Analysis', menu=analysis_menu)
+        self.config(menu=menubar)
 
         # Todo: range selector
         range_frame = ttk.Frame(self)
@@ -73,9 +92,12 @@ class DisplayApp(tk.Tk):
         btn = ttk.Button(range_frame, text='Placeholder')
         btn.pack()
 
-        frame = ScrollableLabelFrame(self, text='2020-01-01 to 2021-01-01')
-        frame.pack(fill=BOTH, expand=True, side=BOTTOM)
+        self.frame = ScrollableLabelFrame(self, text='2020-01-01 to 2021-01-01')
+        self.frame.pack(fill=BOTH, expand=True, side=BOTTOM)
 
+        self.plot()
+
+    def plot(self):
         # Get column names to show
         figure_cols = set(self.data.columns)
         ignore_cols = {'Datetime', 'Timezone (minutes)',
@@ -88,12 +110,12 @@ class DisplayApp(tk.Tk):
 
         fig_size = (9, 4)
         fig_dpi = 100
-        print('self.data.columns: {}'.format(self.data.columns))
         for col_name in sorted(figure_cols):
             fig = Figure(figsize=fig_size, dpi=fig_dpi)
             ax = fig.add_subplot(111)
             subject.plot(x='Datetime', y=col_name, ax=ax)
-            data_plot = FigureCanvasTkAgg(fig, master=frame.scrollable_frame)
+            data_plot = FigureCanvasTkAgg(fig,
+                    master=self.frame.scrollable_frame)
             data_plot.draw()
             data_plot.get_tk_widget().pack(fill=X, expand=True)
 
