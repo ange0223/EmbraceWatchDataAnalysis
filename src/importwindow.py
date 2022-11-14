@@ -72,7 +72,7 @@ class MenuSubmitButton(ttk.Button):
 
 
 # GUI for Our project
-class ImportApp(tk.Toplevel):
+class ImportWindow(tk.Toplevel):
     def __init__(self, subject_ids, on_submit=None):
         super().__init__()
         self.submit_callback = on_submit

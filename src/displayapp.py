@@ -10,7 +10,7 @@ import numpy as np
 from datetime import datetime
 
 from data import load_data, get_subject_ids
-from importapp import ImportApp
+from importwindow import ImportWindow
 
 DEFAULT_DATA_PATH = 'Dataset'
 
@@ -73,7 +73,7 @@ class DisplayApp(tk.Tk):
         menubar = Menu(self)
         data_menu = DataMenu(
             menubar,
-            on_import=self.open_import_app,
+            on_import=self.open_import_window,
             on_export=lambda : print('Data > Export pressed'),
             on_clear=self.clear
         )
@@ -99,9 +99,9 @@ class DisplayApp(tk.Tk):
         self.frame = ScrollableLabelFrame(self, text='2020-01-01 to 2021-01-01')
         self.frame.pack(fill=BOTH, expand=True, side=BOTTOM)
 
-    def open_import_app(self):
-        print('DisplayApp.open_import_app()')
-        top = ImportApp(self.subject_ids, on_submit=self.on_import_submit)
+    def open_import_window(self):
+        print('DisplayApp.open_import_window()')
+        top = ImportWindow(self.subject_ids, on_submit=self.on_import_submit)
         top.lift()
         top.mainloop()
 
