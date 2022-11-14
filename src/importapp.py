@@ -43,6 +43,9 @@ class MenuCheckbutton(ttk.Checkbutton):
     def get(self):
         return self._var.get()
 
+    def set(self, val):
+        self._var.set(val)
+
     def grid(self, column=1, row=0, sticky=tk.W, padx=5, pady=5,
              **kwargs):
         super().grid(column=column, row=row, sticky=sticky, padx=padx,
@@ -152,8 +155,14 @@ class ImportApp(tk.Toplevel):
         self.wrist_checkbtn = MenuCheckbutton(self)
         self.wrist_checkbtn.grid(row=12)
 
+        toggle_all_label = MenuLabel(self, text='Toggle All:')
+        toggle_all_label.grid(row=13)
+        self.toggle_all_checkbtn = MenuCheckbutton(self,
+                command=self.toggle_all_display_fields)
+        self.toggle_all_checkbtn.grid(row=13)
+
         submit_btn = MenuSubmitButton(self, command=self.submit)
-        submit_btn.grid(row=13)
+        submit_btn.grid(row=14)
 
     def get_options(self):
         user_input = {
@@ -176,6 +185,17 @@ class ImportApp(tk.Toplevel):
         if self.submit_callback:
             self.submit_callback(options)
         self.destroy()
+
+    def toggle_all_display_fields(self):
+        toggle_state = self.toggle_all_checkbtn.get()
+        self.acc_checkbtn.set(toggle_state)
+        self.acc_checkbtn.set(toggle_state)
+        self.eda_checkbtn.set(toggle_state)
+        self.temp_checkbtn.set(toggle_state)
+        self.movement_checkbtn.set(toggle_state)
+        self.step_checkbtn.set(toggle_state)
+        self.rest_checkbtn.set(toggle_state)
+        self.wrist_checkbtn.set(toggle_state)
 
 
 if __name__ == '__main__':
