@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import sys
 
+# NOTE: should establish a naming convention between users and subjects
 
 def load_summary(csv_path):
     '''
@@ -27,6 +28,20 @@ def load_summary(csv_path):
     # Rename 'Datetime (UTC)' to 'Datetime'
     df = df.rename(columns={'Datetime (UTC)': 'Datetime'})
     return df
+
+
+def get_subjects(data_path):
+    try:
+        day_dirs = os.listdir(data_path)
+    except FileNotFoundError as e:
+        print('Data path "{}" not found.'.format(data_path))
+        return None
+    subjects = set()
+    for day_dir in day_dirs:
+        day_path = os.path.join(data_path, day_dir)
+        for sub_dir in os.listdir(day_path):
+            subjects.add(sub_dir)
+    return subjects
 
 
 def load_data(data_path, users=None, start_time=None, end_time=None,
@@ -113,6 +128,9 @@ if __name__ == '__main__':
         users = ''
     else:
         data_path = input('Please enter data path (blank: Dataset): ')
+        if len(data_path) == 0: data_path = 'Dataset'
+        avail_subs = sorted(list(get_subjects(data_path)))
+        print('Available subjects: {}'.format(','.join(avail_subs)))
         users = input('Please enter subjects (blank: all) (Ex: 310,311): ')
     if len(data_path) == 0: data_path = 'Dataset'
     print('data_path: "{}"'.format(data_path))
