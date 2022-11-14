@@ -10,6 +10,7 @@ import numpy as np
 from datetime import datetime
 
 from data import load_data
+from importapp import ImportApp
 
 DEFAULT_DATA_PATH = 'Dataset'
 
@@ -57,10 +58,12 @@ class AnalysisMenu(Menu):
 
 
 class DisplayApp(tk.Tk):
-    def __init__(self, options, data_path=DEFAULT_DATA_PATH):
+    def __init__(self, data_path=DEFAULT_DATA_PATH):
         super().__init__()
         # Use provided data_path and data options to load data
-        self.data = load_data(data_path, **options)
+        self.data_path = data_path
+        self.data = None
+        self.plots = [] # used to easily reference displayed plots
         self.title('Data Analyzer')
         self.geometry('900x600+50+50')
         self.resizable(True, True)
@@ -69,9 +72,9 @@ class DisplayApp(tk.Tk):
         menubar = Menu(self)
         data_menu = DataMenu(
             menubar,
-            on_import=lambda : print('Data > Import pressed'),
+            on_import=self.open_import_app,
             on_export=lambda : print('Data > Export pressed'),
-            on_clear=lambda : print('Data > Clear pressed')
+            on_clear=self.clear
         )
         time_series_menu = TimeSeriesMenu(
             menubar,
@@ -95,9 +98,28 @@ class DisplayApp(tk.Tk):
         self.frame = ScrollableLabelFrame(self, text='2020-01-01 to 2021-01-01')
         self.frame.pack(fill=BOTH, expand=True, side=BOTTOM)
 
-        self.plot()
+    def on_import_submit(self, options):
+        print('DisplayApp.on_import_submit()')
+        self.data = load_data(self.data_path, **options)
+        print('self.data:')
+        print(self.data)
+        self.clear()
+        self.load_plots()
 
-    def plot(self):
+    def open_import_app(self):
+        print('DisplayApp.open_import_app()')
+        top = ImportApp(on_submit=self.on_import_submit)
+        top.lift()
+        top.mainloop()
+
+    def clear(self):
+        print('DisplayApp.clear()')
+        for plot in self.plots:
+            plot.get_tk_widget().destroy()
+        self.plots = []
+
+    def load_plots(self):
+        print('DisplayApp.load_plots()')
         # Get column names to show
         figure_cols = set(self.data.columns)
         ignore_cols = {'Datetime', 'Timezone (minutes)',
@@ -116,6 +138,7 @@ class DisplayApp(tk.Tk):
             subject.plot(x='Datetime', y=col_name, ax=ax)
             data_plot = FigureCanvasTkAgg(fig,
                     master=self.frame.scrollable_frame)
+            self.plots.append(data_plot)
             data_plot.draw()
             data_plot.get_tk_widget().pack(fill=X, expand=True)
 

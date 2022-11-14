@@ -4,8 +4,6 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, Menu
 
-from displayapp import DisplayApp
-
 DATE_FMT = '%Y-%m-%d %H:%M:%S'
 
 
@@ -62,13 +60,12 @@ class MenuSubmitButton(ttk.Button):
 
 
 # GUI for Our project
-class App(tk.Tk):
-
-    def __init__(self):
+class ImportApp(tk.Toplevel):
+    def __init__(self, on_submit=None):
         super().__init__()
-
+        self.submit_callback = on_submit
         self.title('EmbraceWatch Data Analysis')
-        self.geometry('900x600+50+50')
+        self.geometry('500x600+100+100')
         self.resizable(False, False)
         self.configure(background='#e8f4f8')
 
@@ -155,7 +152,7 @@ class App(tk.Tk):
         self.wrist_checkbtn = MenuCheckbutton(self)
         self.wrist_checkbtn.grid(row=12)
 
-        submit_btn = MenuSubmitButton(self, command=self.open_display_app)
+        submit_btn = MenuSubmitButton(self, command=self.submit)
         submit_btn.grid(row=13)
 
     def get_options(self):
@@ -174,10 +171,11 @@ class App(tk.Tk):
         }
         return user_input
 
-    def open_display_app(self):
+    def submit(self):
         options = self.get_options()
-        top = DisplayApp(options)
-        top.mainloop()
+        if self.submit_callback:
+            self.submit_callback(options)
+        self.destroy()
 
 
 if __name__ == '__main__':

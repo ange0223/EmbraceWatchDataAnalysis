@@ -1,8 +1,9 @@
-from app import App
+from displayapp import DisplayApp
+#from app import App
 
 
 def main():
-    app = App()
+    app = DisplayApp()
     app.mainloop()
 
 
