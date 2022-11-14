@@ -30,7 +30,7 @@ def load_summary(csv_path):
     return df
 
 
-def get_subjects(data_path):
+def get_subject_ids(data_path):
     try:
         day_dirs = os.listdir(data_path)
     except FileNotFoundError as e:
@@ -40,7 +40,7 @@ def get_subjects(data_path):
     for day_dir in day_dirs:
         day_path = os.path.join(data_path, day_dir)
         for sub_dir in os.listdir(day_path):
-            subjects.add(sub_dir)
+            subjects.add(int(sub_dir))
     return subjects
 
 
@@ -60,6 +60,9 @@ def load_data(data_path, users=None, start_time=None, end_time=None,
     except FileNotFoundError as e:
         print('Data path "{}" not found.'.format(data_path))
         return None
+    # Account for passing a single user rather than a list
+    if isinstance(users, int):
+        users = [users]
     # Empty dataframe to store accumulated data
     data = pd.DataFrame()
     for day_dir in day_dirs:
@@ -129,7 +132,7 @@ if __name__ == '__main__':
     else:
         data_path = input('Please enter data path (blank: Dataset): ')
         if len(data_path) == 0: data_path = 'Dataset'
-        avail_subs = sorted(list(get_subjects(data_path)))
+        avail_subs = sorted(list(get_subject_ids(data_path)))
         print('Available subjects: {}'.format(','.join(avail_subs)))
         users = input('Please enter subjects (blank: all) (Ex: 310,311): ')
     if len(data_path) == 0: data_path = 'Dataset'

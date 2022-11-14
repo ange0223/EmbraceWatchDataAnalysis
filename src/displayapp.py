@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
-from data import load_data
+from data import load_data, get_subject_ids
 from importapp import ImportApp
 
 DEFAULT_DATA_PATH = 'Dataset'
@@ -62,6 +62,7 @@ class DisplayApp(tk.Tk):
         super().__init__()
         # Use provided data_path and data options to load data
         self.data_path = data_path
+        self.subject_ids = sorted(list(get_subject_ids(data_path)))
         self.data = None
         self.plots = [] # used to easily reference displayed plots
         self.title('Data Analyzer')
@@ -98,19 +99,17 @@ class DisplayApp(tk.Tk):
         self.frame = ScrollableLabelFrame(self, text='2020-01-01 to 2021-01-01')
         self.frame.pack(fill=BOTH, expand=True, side=BOTTOM)
 
+    def open_import_app(self):
+        print('DisplayApp.open_import_app()')
+        top = ImportApp(self.subject_ids, on_submit=self.on_import_submit)
+        top.lift()
+        top.mainloop()
+
     def on_import_submit(self, options):
         print('DisplayApp.on_import_submit()')
         self.data = load_data(self.data_path, **options)
-        print('self.data:')
-        print(self.data)
         self.clear()
         self.load_plots()
-
-    def open_import_app(self):
-        print('DisplayApp.open_import_app()')
-        top = ImportApp(on_submit=self.on_import_submit)
-        top.lift()
-        top.mainloop()
 
     def clear(self):
         print('DisplayApp.clear()')
@@ -126,7 +125,6 @@ class DisplayApp(tk.Tk):
                 'Unix Timestamp (UTC)', 'subject_id'}
         figure_cols = figure_cols - ignore_cols
 
-        # Only displaying figures for first subject for now
         subject_id = self.data['subject_id'].unique()[0]
         subject = self.data[self.data['subject_id'] == subject_id]
 

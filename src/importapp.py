@@ -13,8 +13,7 @@ class MenuLabel(ttk.Label):
         super().__init__(parent, background='#e8f4f8',
                          font=(font_family, font_size), **kwargs)
 
-    def grid(self, column=0, row=0, sticky=tk.W, padx=5, pady=5,
-             **kwargs):
+    def grid(self, column=0, row=0, sticky=tk.W, padx=5, pady=5, **kwargs):
         super().grid(column=column, row=row, sticky=sticky, padx=padx,
                      pady=pady, **kwargs)
 
@@ -28,8 +27,7 @@ class MenuEntry(ttk.Entry):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
 
-    def grid(self, column=1, row=0, sticky=tk.W, padx=5, pady=5,
-             **kwargs):
+    def grid(self, column=1, row=0, sticky=tk.W, padx=5, pady=5, **kwargs):
         super().grid(column=column, row=row, sticky=sticky, padx=padx,
                      pady=pady, **kwargs)
 
@@ -46,8 +44,20 @@ class MenuCheckbutton(ttk.Checkbutton):
     def set(self, val):
         self._var.set(val)
 
-    def grid(self, column=1, row=0, sticky=tk.W, padx=5, pady=5,
-             **kwargs):
+    def grid(self, column=1, row=0, sticky=tk.W, padx=5, pady=5, **kwargs):
+        super().grid(column=column, row=row, sticky=sticky, padx=padx,
+                     pady=pady, **kwargs)
+
+
+class MenuDropDown(ttk.OptionMenu):
+    def __init__(self, parent, tkvar, default, *options):
+        super().__init__(parent, tkvar, default, *options)
+        self._var = tkvar
+
+    def get(self):
+        return self._var.get()
+
+    def grid(self, column=1, row=0, sticky=tk.W, padx=5, pady=5, **kwargs):
         super().grid(column=column, row=row, sticky=sticky, padx=padx,
                      pady=pady, **kwargs)
 
@@ -56,15 +66,14 @@ class MenuSubmitButton(ttk.Button):
     def __init__(self, parent, text='Submit', **kwargs):
         super().__init__(parent, text=text, **kwargs)
 
-    def grid(self, column=1, row=0, sticky=tk.E, padx=5, pady=5,
-             **kwargs):
+    def grid(self, column=1, row=0, sticky=tk.E, padx=5, pady=5, **kwargs):
         super().grid(column=column, row=row, stick=sticky, padx=padx,
                      pady=pady, **kwargs)
 
 
 # GUI for Our project
 class ImportApp(tk.Toplevel):
-    def __init__(self, on_submit=None):
+    def __init__(self, subject_ids, on_submit=None):
         super().__init__()
         self.submit_callback = on_submit
         self.title('EmbraceWatch Data Analysis')
@@ -96,9 +105,8 @@ class ImportApp(tk.Toplevel):
 
         users_label = MenuLabel(self, text='EmbraceWatch User ID(s):')
         users_label.grid(row=1)
-        self.users_entry = MenuEntry(self)
-        self.users_entry.insert(0, '310,311')
-        self.users_entry.grid(row=1)
+        self.user_drop = MenuDropDown(self, tk.IntVar(), subject_ids[0], *subject_ids)
+        self.user_drop.grid(row=1)
 
         start_label = MenuLabel(self, text='Date Start:')
         start_label.grid(row=2)
@@ -166,7 +174,8 @@ class ImportApp(tk.Toplevel):
 
     def get_options(self):
         user_input = {
-            'users': map(int, self.users_entry.get().split(',')),
+            #'users': map(int, self.users_entry.get().split(',')),
+            'users': self.user_drop.get(),
             'start_time': datetime.strptime(self.start_entry.get(), DATE_FMT),
             'end_time': datetime.strptime(self.end_entry.get(), DATE_FMT),
             'utc_mode': self.utc_checkbtn.get(),
