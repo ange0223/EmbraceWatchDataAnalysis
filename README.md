@@ -46,3 +46,7 @@ Unix-like: `python3 src/data.py -q` or `python3 src/data.py --quick`
 Windows: `python src\displayapp.py`
 
 Unix-like: `python3 src/displayapp.py`
+
+
+### Run importwindow.py (basic test)
+TODO
