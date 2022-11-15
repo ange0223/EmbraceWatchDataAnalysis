@@ -7,7 +7,7 @@ from tkinter import ttk, Menu
 DATE_FMT = '%Y-%m-%d %H:%M:%S'
 
 
-class MenuLabel(ttk.Label):
+class CommonLabel(ttk.Label):
     def __init__(self, parent, font_family='Helvetica', font_size=14,
                 background='#e8f4f8', **kwargs):
         super().__init__(parent, background='#e8f4f8',
@@ -18,12 +18,12 @@ class MenuLabel(ttk.Label):
                      pady=pady, **kwargs)
 
 
-class MenuHeader(MenuLabel):
+class CommonHeader(CommonLabel):
     def __init__(self, parent, font_size=24, **kwargs):
         super().__init__(parent, font_size=font_size, **kwargs)
 
 
-class MenuEntry(ttk.Entry):
+class CommonEntry(ttk.Entry):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
 
@@ -32,7 +32,7 @@ class MenuEntry(ttk.Entry):
                      pady=pady, **kwargs)
 
 
-class MenuCheckbutton(ttk.Checkbutton):
+class CommonCheckbutton(ttk.Checkbutton):
     def __init__(self, parent, **kwargs):
         self._var = tk.IntVar()
         super().__init__(parent, variable=self._var,
@@ -49,7 +49,7 @@ class MenuCheckbutton(ttk.Checkbutton):
                      pady=pady, **kwargs)
 
 
-class MenuDropDown(ttk.OptionMenu):
+class CommonDropDown(ttk.OptionMenu):
     def __init__(self, parent, tkvar, default, *options):
         super().__init__(parent, tkvar, default, *options)
         self._var = tkvar
@@ -62,7 +62,7 @@ class MenuDropDown(ttk.OptionMenu):
                      pady=pady, **kwargs)
 
 
-class MenuSubmitButton(ttk.Button):
+class CommonSubmitButton(ttk.Button):
     def __init__(self, parent, text='Submit', **kwargs):
         super().__init__(parent, text=text, **kwargs)
 
@@ -100,76 +100,76 @@ class ImportWindow(tk.Toplevel):
             command=self.destroy
         )
 
-        options_label = MenuHeader(self, text='Options')
+        options_label = CommonHeader(self, text='Options')
         options_label.grid(row=0)
 
-        users_label = MenuLabel(self, text='EmbraceWatch User ID(s):')
+        users_label = CommonLabel(self, text='EmbraceWatch User ID(s):')
         users_label.grid(row=1)
-        self.user_drop = MenuDropDown(self, tk.IntVar(), subject_ids[0], *subject_ids)
+        self.user_drop = CommonDropDown(self, tk.IntVar(), subject_ids[0], *subject_ids)
         self.user_drop.grid(row=1)
 
-        start_label = MenuLabel(self, text='Date Start:')
+        start_label = CommonLabel(self, text='Date Start:')
         start_label.grid(row=2)
-        self.start_entry = MenuEntry(self)
+        self.start_entry = CommonEntry(self)
         self.start_entry.insert(0, '2020-01-17 23:48:00')
         self.start_entry.grid(row=2)
 
-        end_label = MenuLabel(self, text='Date End:')
+        end_label = CommonLabel(self, text='Date End:')
         end_label.grid(row=3)
-        self.end_entry = MenuEntry(self)
+        self.end_entry = CommonEntry(self)
         self.end_entry.insert(0, '2022-01-17 23:48:00')
         self.end_entry.grid(row=3)
 
-        utc_label = MenuLabel(self, text='UTC:')
+        utc_label = CommonLabel(self, text='UTC:')
         utc_label.grid(row=4)
-        self.utc_checkbtn = MenuCheckbutton(self)
+        self.utc_checkbtn = CommonCheckbutton(self)
         self.utc_checkbtn.grid(row=4)
 
-        display_label = MenuHeader(self, text='Fields to Display')
+        display_label = CommonHeader(self, text='Fields to Display')
         display_label.grid(row=5)
 
-        acc_label = MenuLabel(self, text='ACC Avg Magnitude:')
+        acc_label = CommonLabel(self, text='ACC Avg Magnitude:')
         acc_label.grid(row=6)
-        self.acc_checkbtn = MenuCheckbutton(self)
+        self.acc_checkbtn = CommonCheckbutton(self)
         self.acc_checkbtn.grid(row=6)
 
-        eda_label = MenuLabel(self, text='EDA Avg:')
+        eda_label = CommonLabel(self, text='EDA Avg:')
         eda_label.grid(row=7)
-        self.eda_checkbtn = MenuCheckbutton(self)
+        self.eda_checkbtn = CommonCheckbutton(self)
         self.eda_checkbtn.grid(row=7)
 
-        temp_label = MenuLabel(self, text='Temperature Avg:')
+        temp_label = CommonLabel(self, text='Temperature Avg:')
         temp_label.grid(row=8)
-        self.temp_checkbtn = MenuCheckbutton(self)
+        self.temp_checkbtn = CommonCheckbutton(self)
         self.temp_checkbtn.grid(row=8)
 
-        movement_label = MenuLabel(self, text='Movement Intensity:')
+        movement_label = CommonLabel(self, text='Movement Intensity:')
         movement_label.grid(row=9)
-        self.movement_checkbtn = MenuCheckbutton(self)
+        self.movement_checkbtn = CommonCheckbutton(self)
         self.movement_checkbtn.grid(row=9)
 
-        step_label = MenuLabel(self, text='Steps:')
+        step_label = CommonLabel(self, text='Steps:')
         step_label.grid(row=10)
-        self.step_checkbtn = MenuCheckbutton(self)
+        self.step_checkbtn = CommonCheckbutton(self)
         self.step_checkbtn.grid(row=10)
 
-        rest_label = MenuLabel(self, text='Rest:')
+        rest_label = CommonLabel(self, text='Rest:')
         rest_label.grid(row=11)
-        self.rest_checkbtn = MenuCheckbutton(self)
+        self.rest_checkbtn = CommonCheckbutton(self)
         self.rest_checkbtn.grid(row=11)
 
-        wrist_label = MenuLabel(self, text='On Wrist:')
+        wrist_label = CommonLabel(self, text='On Wrist:')
         wrist_label.grid(row=12)
-        self.wrist_checkbtn = MenuCheckbutton(self)
+        self.wrist_checkbtn = CommonCheckbutton(self)
         self.wrist_checkbtn.grid(row=12)
 
-        toggle_all_label = MenuLabel(self, text='Toggle All:')
+        toggle_all_label = CommonLabel(self, text='Toggle All:')
         toggle_all_label.grid(row=13)
-        self.toggle_all_checkbtn = MenuCheckbutton(self,
+        self.toggle_all_checkbtn = CommonCheckbutton(self,
                 command=self.toggle_all_display_fields)
         self.toggle_all_checkbtn.grid(row=13)
 
-        submit_btn = MenuSubmitButton(self, command=self.submit)
+        submit_btn = CommonSubmitButton(self, command=self.submit)
         submit_btn.grid(row=14)
 
     def get_options(self):
