@@ -10,8 +10,6 @@ class CommonTextBox(tk.Text):
         super().__init__(*args, **kwargs)
 
 
-
-
 class QueryWindow(tk.Toplevel):
     def __init__(self, on_apply=None, on_undo=None):
         super().__init__()
