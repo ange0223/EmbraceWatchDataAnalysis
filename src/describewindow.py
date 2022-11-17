@@ -6,27 +6,43 @@ from common import ToplevelWindow
 
 
 class Label(ttk.Label):
-    def __init__(self, parent, *args, background='#e8f4f8',
-                 font_family='Helvetica', font_size=14, **kwargs):
-        super().__init__(parent, *args, background=background,
-                         font=(font_family, font_size))
+    def __init__(self, parent, background='#e8f4f8', font_family='Helvetica',
+                 font_size=14, font_bold=False, **kwargs):
+        font = '{family} {size}{bold}'.format(
+            family=font_family,
+            size=font_size,
+            bold=' bold' if font_bold else ''
+        )
+        super().__init__(parent, background=background, font=font, **kwargs)
 
-    def pack(self, side=LEFT, **kwargs):
-        super().pack(side=side, **kwargs)
+    def pack(self, expand=False, fill=None, side=LEFT, ipady=5,
+             **kwargs):
+        super().pack(expand=expand, fill=fill, side=side, ipady=ipady, **kwargs)
+
+
+class NameLabel(Label):
+    def __init__(self, parent, font_size=16, font_bold=True, **kwargs):
+        super().__init__(parent, font_size=font_size, font_bold=font_bold,
+                         **kwargs)
+
+
+class ValueLabel(Label):
+    def pack(self, padx=(0, 30), **kwargs):
+        super().pack(padx=padx, **kwargs)
 
 
 class SourceFrame(ttk.LabelFrame):
     def __init__(self, *args, text='Source', **kwargs):
         super().__init__(*args, text=text, **kwargs)
         top_frame = ttk.Frame(self)
-        Label(top_frame, text='Series: ').pack()
-        self.series_lbl = Label(top_frame, text='series')
+        NameLabel(top_frame, text='Series: ').pack()
+        self.series_lbl = ValueLabel(top_frame, text='series')
         self.series_lbl.pack()
-        Label(top_frame, text='Aggregate by: ').pack()
-        self.agg_by_lbl = Label(top_frame, text='aggregate by')
+        NameLabel(top_frame, text='Aggregate by: ').pack()
+        self.agg_by_lbl = ValueLabel(top_frame, text='aggregate by')
         self.agg_by_lbl.pack()
-        Label(top_frame, text='Aggregate metric: ').pack()
-        self.agg_metric_lbl = Label(top_frame, text='aggregate metric')
+        NameLabel(top_frame, text='Aggregate metric: ').pack()
+        self.agg_metric_lbl = ValueLabel(top_frame, text='aggregate metric')
         self.agg_metric_lbl.pack()
         self.refresh_btn = ttk.Button(
             top_frame,
@@ -34,11 +50,12 @@ class SourceFrame(ttk.LabelFrame):
             command=self.refresh
         )
         self.refresh_btn.pack(side=LEFT)
+        top_frame.pack(expand=True, fill=BOTH, side=LEFT)
 
     def refresh(self):
         print('SourceFrame.refresh()')
 
-    def pack(self, fill=BOTH, expand=True, side=TOP):
+    def pack(self, expand=True, fill=BOTH, side=TOP):
         super().pack(fill=fill, expand=expand, side=side)
 
 
@@ -46,8 +63,8 @@ class DescriptionFrame(ttk.LabelFrame):
     def __init__(self, *args, text='Source', **kwargs):
         super().__init__(*args, text=text, **kwargs)
 
-    def pack(self, fill=BOTH, expand=True, side=TOP):
-        super().pack(fill=fill, expand=expand, side=side)
+    def pack(self, expand=True, fill=BOTH, side=TOP):
+        super().pack(expand=expand, fill=fill, side=side)
 
 
 class DescribeWindow(tk.Toplevel):
@@ -55,7 +72,13 @@ class DescribeWindow(tk.Toplevel):
         super().__init__()
         self.data = data
         self.title('Description')
-        self.geometry('500x600+100+100')
+        self.geometry('9000x600+100+100')
 
         self.source_frame = SourceFrame(self)
-        self.source_frame.pack(fill=BOTH, expand=True, side=TOP)
+        self.source_frame.pack()
+
+
+
+if __name__ == '__main__':
+    dw = DescribeWindow(None)
+    dw.mainloop()
