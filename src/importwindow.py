@@ -4,6 +4,8 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, Menu
 
+from common import ToplevelWindow
+
 DATE_FMT = '%Y-%m-%d %H:%M:%S'
 
 
@@ -72,14 +74,12 @@ class CommonSubmitButton(ttk.Button):
 
 
 # GUI for Our project
-class ImportWindow(tk.Toplevel):
+class ImportWindow(ToplevelWindow):
     def __init__(self, subject_ids, on_submit=None):
         super().__init__()
         self.submit_callback = on_submit
         self.title('EmbraceWatch Data Analysis')
         self.geometry('500x600+100+100')
-        self.resizable(False, False)
-        self.configure(background='#e8f4f8')
 
         # create a menubar
         menubar = Menu(self)
