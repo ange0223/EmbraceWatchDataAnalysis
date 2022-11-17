@@ -60,7 +60,7 @@ class SourceFrame(ttk.LabelFrame):
 
 
 class DescriptionFrame(ttk.LabelFrame):
-    def __init__(self, *args, text='Source', **kwargs):
+    def __init__(self, *args, text='Description', **kwargs):
         super().__init__(*args, text=text, **kwargs)
 
     def pack(self, expand=True, fill=BOTH, side=TOP):
