@@ -9,5 +9,7 @@ class DescribeWindow(tk.Toplevel):
     def __init__(self, data):
         super().__init__()
         self.data = data
-        self.title('Describe')
+        self.title('Description')
         self.geometry('500x600+100+100')
+
+        
