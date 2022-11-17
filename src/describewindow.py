@@ -72,7 +72,7 @@ class DescribeWindow(tk.Toplevel):
         super().__init__()
         self.data = data
         self.title('Description')
-        self.geometry('9000x600+100+100')
+        self.geometry('900x600+100+100')
 
         self.source_frame = SourceFrame(self)
         self.source_frame.pack()
