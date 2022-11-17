@@ -36,6 +36,45 @@ class AnalysisMenu(Menu):
         self.add_command(label='Placeholder', command=on_placeholder)
 
 
+class TimeEntry(ttk.Entry):
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+
+
+class TimeRangeSelector(ttk.Frame):
+    def __init__(self, parent, *args, on_apply=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_callback = on_apply
+        self.time_min_entry = TimeEntry(self)
+        self.time_min_entry.insert(0, '')
+        self.time_min_entry.pack(side=LEFT)
+        self.time_max_entry = TimeEntry(self)
+        self.time_max_entry.insert(0, '')
+        self.time_max_entry.pack(side=LEFT)
+        time_apply_btn = ttk.Button(
+            self,
+            text='Apply',
+            command=self.apply
+        )
+        time_apply_btn.pack(side=LEFT)
+
+    def apply(self):
+        if not self.apply_callback:
+            return
+        print(self.apply_callback)
+        self.apply_callback(self.time_min_entry.get(), self.time_max_entry.get())
+
+    def get(self):
+        return self.time_min_entry.get(), self.time_max_entry.get()
+
+    def set(self, time_min, time_max):
+        self.time_min_entry.insert(0, str(time_min))
+        self.time_max_entry.insert(0, str(time_max))
+
+    def pack(self):
+        super().pack(fill=BOTH, side=TOP)
+
+
 class DisplayApp(tk.Tk):
     def __init__(self, data_path=DEFAULT_DATA_PATH):
         super().__init__()
@@ -44,6 +83,8 @@ class DisplayApp(tk.Tk):
         self.subject_ids = sorted(list(get_subject_ids(data_path)))
         self.data = None
         self.plots = [] # used to easily reference displayed plots
+        self._active_data = None
+        self.describe_window = None
         self.title('Data Analyzer')
         self.geometry('900x600+50+50')
         self.resizable(True, True)
@@ -69,14 +110,45 @@ class DisplayApp(tk.Tk):
         menubar.add_cascade(label='Analysis', menu=analysis_menu)
         self.config(menu=menubar)
 
-        # Todo: range selector
-        range_frame = ttk.Frame(self)
-        range_frame.pack(fill=BOTH, side=TOP)
-        btn = ttk.Button(range_frame, text='Placeholder')
-        btn.pack()
+        self.time_selector = TimeRangeSelector(
+            self,
+            on_apply=self.on_time_apply
+        )
+        self.time_selector.pack()
 
-        self.frame = ScrollableLabelFrame(self, text='2020-01-01 to 2021-01-01')
+        self.frame = ScrollableLabelFrame(self, text='')
         self.frame.pack(fill=BOTH, expand=True, side=BOTTOM)
+
+    @property
+    def active_data(self):
+        return self._active_data
+
+    @active_data.setter
+    def active_data(self, data):
+        '''
+        Need to update several different things when active data changes
+        '''
+        self._active_data = data
+        self.clear()
+        self.load_plots()
+        self.update_describe_window()
+
+    def on_time_apply(self, time_min, time_max):
+        print('DisplayApp.on_time_apply()')
+        if self.data is None:
+            return
+        self.active_data = self.data[
+            (self.data['Datetime'] > time_min)
+            & (self.data['Datetime'] < time_max)
+        ]
+
+    def update_describe_window(self):
+        if self.describe_window is None:
+            return
+        # TODO
+        #self.describe_window.update_time(time_min, time_max)
+        # or
+        #self.describe_window.update_data(self.active_data)
 
     def open_import_window(self):
         print('DisplayApp.open_import_window()')
@@ -87,6 +159,10 @@ class DisplayApp(tk.Tk):
     def on_import_submit(self, options):
         print('DisplayApp.on_import_submit()')
         self.data = load_data(self.data_path, **options)
+        time_min = min(self.data['Datetime'])
+        time_max = max(self.data['Datetime'])
+        self.time_selector.set(time_min, time_max)
+        self.on_time_apply(time_min, time_max)
         self.clear()
         self.load_plots()
 
@@ -99,13 +175,13 @@ class DisplayApp(tk.Tk):
     def load_plots(self):
         print('DisplayApp.load_plots()')
         # Get column names to show
-        figure_cols = set(self.data.columns)
+        figure_cols = set(self.active_data.columns)
         ignore_cols = {'Datetime', 'Timezone (minutes)',
                 'Unix Timestamp (UTC)', 'subject_id'}
         figure_cols = figure_cols - ignore_cols
 
-        subject_id = self.data['subject_id'].unique()[0]
-        subject = self.data[self.data['subject_id'] == subject_id]
+        subject_id = self.active_data['subject_id'].unique()[0]
+        subject = self.active_data[self.active_data['subject_id'] == subject_id]
 
         fig_size = (9, 4)
         fig_dpi = 100
