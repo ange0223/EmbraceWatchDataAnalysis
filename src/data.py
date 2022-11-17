@@ -26,6 +26,7 @@ def load_summary(csv_path):
         'On Wrist': 'int'
     })
     # Rename 'Datetime (UTC)' to 'Datetime'
+    # Probably shouldn't, since we'll need to switch back and forth
     df = df.rename(columns={'Datetime (UTC)': 'Datetime'})
     return df
 
