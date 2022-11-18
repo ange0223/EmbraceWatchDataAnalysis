@@ -121,29 +121,19 @@ class TableCell(ttk.Label):
 class DescriptionTable(ttk.Frame):
     def __init__(self, parent, series, **kwargs):
         super().__init__(parent, **kwargs)
-        self.series = series
-        self.data = None
         self.cells = []
-        self._populate()
 
-    def update(self, data):
-        self.data = data
-        self._clear()
-        self._populate()
-
-    def _clear(self):
+    def clear(self):
         for cell in self.cells:
             cell.destroy()
 
-    def _populate(self):
-        if self.data is None:
-            return
+    def populate(self, data, header_text):
         max_width = max(len(series), 5)
         header = TableCell(self, background='#333333', foreground='#f0f0f0',
-                           text=self.series, width=6+max_width)
+                           text=header_text, width=6+max_width)
         header.grid(column=0, row=0, columnspan=2)
         self.cells.append(header)
-        for row, (index, value) in enumerate(self.data.items(), start=1):
+        for row, (index, value) in enumerate(data.items(), start=1):
             label_cell = TableCell(self, background='#dddddd', text=index,
                                    width=6)
             label_cell.grid(column=0, row=row)
@@ -180,30 +170,27 @@ class PlotFrame(ttk.Frame):
 
 
 class DescriptionFrame(ttk.LabelFrame):
-    def __init__(self, parent, data, series, text='Description', **kwargs):
+    def __init__(self, parent, series, text='Description', **kwargs):
         super().__init__(parent, text=text, **kwargs)
-        self.data = data
         self.series = series
         self.plot_frame = PlotFrame(self)
-        self.plot_frame.plot(self.data)
         self.plot_frame.pack()
         self.table_frame = DescriptionTable(self, series)
         self.table_frame.pack()
-        self._populate()
 
     def pack(self, expand=False, fill=Y, side=TOP):
         super().pack(expand=expand, fill=fill, side=side)
 
     def update(self, data):
-        self.data = data
+        sub_data = data[self.series]
         self.plot_frame.clear()
-        self.plot_frame.plot(self.data)
-        self._populate()
-
-    def _populate(self):
+        frequency_data = sub_data.value_counts()
+        self.plot_frame.plot(frequency_data)
         # TODO: Add additional stats to summary data
-        summary_data = self.data[self.series].describe()
-        self.table_frame.update(summary_data)
+        self.table_frame.clear()
+        summary_data = sub_data.describe()
+        self.table_frame.populate(summary_data, self.series)
+
 
 
 class DescribeWindow(tk.Toplevel):
@@ -219,7 +206,7 @@ class DescribeWindow(tk.Toplevel):
         self.geometry('900x600+100+100')
         self.source_frame = SourceFrame(self, series, interval, agg_metric)
         self.source_frame.pack()
-        self.description_frame = DescriptionFrame(self, data, series)
+        self.description_frame = DescriptionFrame(self, series)
         self.description_frame.pack()
         self._update_source()
         self._update_description()
