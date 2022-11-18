@@ -11,7 +11,10 @@ from datetime import datetime
 
 from data import load_data, get_subject_ids
 from importwindow import ImportWindow
+from describewindow import DescribeWindow
 from common import ScrollableLabelFrame
+
+# TODO: instantiate DescribeWindow via context menu
 
 DEFAULT_DATA_PATH = 'Dataset'
 
