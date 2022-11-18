@@ -147,11 +147,13 @@ class DisplayApp(tk.Tk):
         ]
 
     def update_describe_window(self):
+        print('DisplayApp.update_describe_window()')
         if self.describe_window is None:
             return
         self.describe_window.update(self._active_data, self.interval)
 
     def open_describe_window(self, series):
+        print('DisplayApp.open_describe_window()')
         if self.describe_window:
             self.describe_window.destroy()
         self.describe_window = DescribeWindow(series)
