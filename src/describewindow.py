@@ -1,3 +1,8 @@
+'''
+describewindow.py
+
+Pandas offset aliases: https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+'''
 import tkinter as tk
 from tkinter import ttk, Menu
 from tkinter.constants import *
@@ -48,19 +53,19 @@ class DropDown(ttk.OptionMenu):
         super().pack(expand=expand, fill=fill, side=side, padx=padx, **kwargs)
 
 
-# TODO: Update source frame info
 class SourceFrame(ttk.LabelFrame):
-    def __init__(self, *args, text='Source', **kwargs):
-        super().__init__(*args, text=text, **kwargs)
+    def __init__(self, parent, text='Source',
+                 **kwargs):
+        super().__init__(parent, text=text, **kwargs)
         top_frame = ttk.Frame(self)
         NameLabel(top_frame, text='Series: ').pack()
         self.series_lbl = ValueLabel(top_frame, text='series')
         self.series_lbl.pack()
         NameLabel(top_frame, text='Aggregate by: ').pack()
-        self.agg_by_lbl = ValueLabel(top_frame, text='aggregate by')
+        self.agg_by_lbl = ValueLabel(top_frame, text='interval')
         self.agg_by_lbl.pack()
         NameLabel(top_frame, text='Aggregate metric: ').pack()
-        self.agg_metric_lbl = ValueLabel(top_frame, text='aggregate metric')
+        self.agg_metric_lbl = ValueLabel(top_frame, text='agg_metric')
         self.agg_metric_lbl.pack()
         self.refresh_btn = ttk.Button(
             top_frame,
@@ -93,47 +98,53 @@ class SourceFrame(ttk.LabelFrame):
     def refresh(self):
         print('SourceFrame.refresh()')
 
+    def update(self, series, interval, agg_metric):
+        self.series_lbl.config(text=series)
+        self.agg_by_lbl.config(text=interval)
+        self.agg_metric_lbl.config(text=agg_metric)
+
     def pack(self, expand=False, fill=X, side=TOP):
         super().pack(fill=fill, expand=expand, side=side)
 
 
 class TableCell(ttk.Label):
-    def __init__(self, parent, anchor=W, borderwidth=1, relief='solid', **kwargs):
+    def __init__(self, parent, anchor=W, borderwidth=1, font_bold=False,
+                 font_family='Helvetica', font_size=12, relief='solid',
+                 **kwargs):
+        font = '{family} {size}{bold}'.format(
+            family=font_family,
+            size=font_size,
+            bold=' bold' if font_bold else ''
+        )
         super().__init__(parent, anchor=anchor, borderwidth=borderwidth,
-                         relief=relief, **kwargs)
+                         font=font, relief=relief, **kwargs)
 
-    def pack(self, padx=5, pady=5, sticky='nsew', **kwargs):
-        super().pack(padx=padx, pady=pady, sticky=sticky, **kwargs)
+    def grid(self, sticky='nsew', **kwargs):
+        super().grid(sticky=sticky, **kwargs)
 
 
 class DescriptionTable(ttk.Frame):
-    def __init__(self, parent, series, **kwargs):
+    def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
-        self.series = series
-        self.data = None
         self.cells = []
-        self._populate()
 
-    def update(self, data):
-        self.data = data
-        self._clear()
-        self._populate()
-
-    def _clear(self):
+    def clear(self):
         for cell in self.cells:
             cell.destroy()
 
-    def _populate(self):
-        if self.data is None:
-            return
-        header = TableCell(self, text=series)
-        header.grid(column=1, row=0)
+    def populate(self, data, header_text):
+        max_width = max(len(series), 5)
+        header = TableCell(self, background='#333333', foreground='#f0f0f0',
+                           text=header_text, width=6+max_width)
+        header.grid(column=0, row=0, columnspan=2)
         self.cells.append(header)
-        for row, (index, value) in enumerate(self.data.items(), start=1):
-            label_cell = TableCell(self, text=index)
+        for row, (index, value) in enumerate(data.items(), start=1):
+            label_cell = TableCell(self, background='#dddddd', text=index,
+                                   width=6)
             label_cell.grid(column=0, row=row)
             self.cells.append(label_cell)
-            value_cell = TableCell(self, text=str(value))
+            str_value = '{:.3f}'.format(value)
+            value_cell = TableCell(self, text=str_value, width=max_width)
             value_cell.grid(column=1, row=row)
             self.cells.append(value_cell)
 
@@ -142,102 +153,91 @@ class DescriptionTable(ttk.Frame):
                      **kwargs)
 
 
-class DescriptionFrame(ttk.LabelFrame):
-    def __init__(self, parent, data, series, text='Description', **kwargs):
-        super().__init__(parent, text=text, **kwargs)
-        self.data = data
-        self.series = series
-        self.plot = None
-        self.plot_frame = ttk.Frame(self)
-        self.plot_frame.pack(expand=True, fill=Y, side=LEFT)
-        self.table_frame = DescriptionTable(self, series)
-        self.table_frame.pack()
-        self._load_plot()
-        self._populate()
+class PlotFrame(ttk.Frame):
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, **kwargs)
+        self._plot = None
 
-    def pack(self, expand=False, fill=Y, side=TOP):
+    def pack(self, expand=True, fill=BOTH, side=LEFT, padx=5, pady=5, **kwargs):
+        super().pack(expand=expand, fill=fill, side=side, padx=padx, pady=pady,
+                     **kwargs)
+
+    def clear(self):
+        if self._plot is None:
+            return
+        self._plot.get_tk_widget().destroy()
+
+    def plot(self, data, series, figsize=(7,5), fig_dpi=100):
+        fig = Figure(figsize=figsize, dpi=fig_dpi)
+        self._plot = FigureCanvasTkAgg(fig, master=self)
+        self._plot.get_tk_widget().pack(fill=BOTH, expand=False)
+        ax = fig.add_subplot()
+        ax.set_xlabel(series)
+        ax.set_ylabel('probability')
+        data.plot(kind='bar', ax=ax)
+        fig.tight_layout()
+
+
+class DescriptionFrame(ttk.LabelFrame):
+    def __init__(self, parent, text='Description', **kwargs):
+        super().__init__(parent, text=text, **kwargs)
+        self.plot_frame = PlotFrame(self)
+        self.plot_frame.pack()
+        self.table_frame = DescriptionTable(self)
+        self.table_frame.pack()
+
+    def pack(self, expand=True, fill=Y, side=TOP):
         super().pack(expand=expand, fill=fill, side=side)
 
-    def update(self, data):
-        self.data = data
-        self._clear_plot()
-        self._load_plot()
-        self._populate()
-
-    def _clear_plot(self):
-        if self.plot is None:
-            return
-        self.plot.get_tk_widget().destroy()
-
-    def _load_plot(self):
-        # TODO: Fix plot
-        fig_size = (7, 4)
-        fig_dpi = 100
-        fig = Figure(figsize=fig_size, dpi=fig_dpi)
-        self.plot = FigureCanvasTkAgg(fig, master=self.plot_frame)
-        self.plot.get_tk_widget().pack(fill=BOTH, expand=True)
-        ax = fig.add_subplot()
-        self.data.plot(kind='bar', ax=ax)
-        #self.plot.draw()
-
-    def _populate(self):
+    def update(self, data, series, bins=30):
+        self.plot_frame.clear()
+        #frequency_data = sub_data.groupby(pd.qcut(sub_data, bins)).size()#.value_counts()
+        plot_data = data
+        plot_data['bin'] = pd.qcut(plot_data[series], bins, duplicates='drop')
+        plot_data = plot_data['bin'].value_counts()/len(plot_data['bin'])
+        self.plot_frame.plot(plot_data, series)
         # TODO: Add additional stats to summary data
-        summary_data = self.data[self.series].describe()
-        self.table_frame.update(summary_data)
+        self.table_frame.clear()
+        summary_data = data[series].describe()
+        self.table_frame.populate(summary_data, series)
+
 
 
 class DescribeWindow(tk.Toplevel):
-    def __init__(self, data, series, agg_by, agg_metric, time_min, time_max):
+    def __init__(self):
         super().__init__()
-        self.data = data
-        self.series = series
-        self.agg_by = agg_by
-        self.agg_metric = agg_metric
-        self.time_min = time_min
-        self.time_max = time_max
         self.title('Description')
         self.geometry('900x600+100+100')
         self.source_frame = SourceFrame(self)
         self.source_frame.pack()
-        self.description_frame = DescriptionFrame(self, data, series)
+        self.description_frame = DescriptionFrame(self, series)
         self.description_frame.pack()
-        self._update_source()
-        self._update_description()
 
-    def _update_source(self):
-        # TODO
-        pass
-
-    def _update_description(self):
-        # TODO: Use self.agg_metric instead of assuming 'mean()'
-        data = self.data[['Datetime', self.series]]
-        data = data[
-            (data['Datetime'] > self.time_min)
-            & (data['Datetime'] < self.time_max)
-        ]
-        data = data.set_index('Datetime')
-        data = data.resample(rule=self.agg_by).mean()
-        self.description_frame.update(data)
-
-    def update_time(self, time_min, time_max):
-        self.time_min = time_min
-        self.time_max = time_max
-        self._update_source()
-        self._update_description()
+    def update(self, data, series, interval, agg_metric):
+        self.source_frame.update(series, interval, agg_metric)
+        self.description_frame.update(data, series)
 
 
 
 if __name__ == '__main__':
     from data import load_data
     data = load_data('Dataset', users=310, start_time=None, end_time=None,
-                     utc_mode=False, show_acc=True, show_eda=False,
-                     show_temp=False, show_movement=False, show_step=False,
-                     show_rest=False, show_wrist=False)
-    series = 'Acc magnitude avg'
-    agg_by = 'D' # days
+                     utc_mode=False, show_acc=True, show_eda=True,
+                     show_temp=True, show_movement=True, show_step=True,
+                     show_rest=True, show_wrist=True)
+
+    series = 'Movement intensity'
+    interval = '30min'
     agg_metric = 'mean'
     time_min = min(data['Datetime'])
     time_max = max(data['Datetime'])
-    dw = DescribeWindow(data, series, agg_by, agg_metric, time_min,
-                        time_max)
+    dw_data = data[['Datetime', series]]
+    dw_data = dw_data[
+        (dw_data['Datetime'] > time_min)
+        & (dw_data['Datetime'] < time_max)
+    ]
+    dw_data = dw_data.set_index('Datetime')
+    dw_data = dw_data.resample(rule=interval).mean()
+    dw = DescribeWindow()
+    dw.update(dw_data, series, interval, agg_metric)
     dw.mainloop()
