@@ -50,3 +50,9 @@ Unix-like: `python3 src/displayapp.py`
 
 ### Run importwindow.py (basic test)
 TODO
+
+
+### Run describewindow.py (basic test)
+Windows: `python src\describewindow.py.`
+
+Unix-like: `python3 src/describewindow.py`
