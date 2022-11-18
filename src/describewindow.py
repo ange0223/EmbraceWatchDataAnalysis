@@ -97,11 +97,12 @@ class SourceFrame(ttk.LabelFrame):
 
 
 class TableCell(ttk.Label):
-    def __init__(self, parent, **kwargs):
-        super().__init__(parent, **kwargs)
+    def __init__(self, parent, anchor=W, borderwidth=1, relief='solid', **kwargs):
+        super().__init__(parent, anchor=anchor, borderwidth=borderwidth,
+                         relief=relief, **kwargs)
 
-    def pack(self, padx=5, pady=5, **kwargs):
-        super().pack(padx=padx, pady=pady, **kwargs)
+    def pack(self, padx=5, pady=5, sticky='nsew', **kwargs):
+        super().pack(padx=padx, pady=pady, sticky=sticky, **kwargs)
 
 
 class DescriptionTable(ttk.Frame):
