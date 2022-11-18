@@ -109,8 +109,8 @@ class TableCell(ttk.Label):
         super().__init__(parent, anchor=anchor, borderwidth=borderwidth,
                          relief=relief, **kwargs)
 
-    def pack(self, padx=5, pady=5, sticky='nsew', **kwargs):
-        super().pack(padx=padx, pady=pady, sticky=sticky, **kwargs)
+    def grid(self, sticky='nsew', **kwargs):
+        super().grid(sticky=sticky, **kwargs)
 
 
 class DescriptionTable(ttk.Frame):
