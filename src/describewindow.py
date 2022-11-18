@@ -15,7 +15,7 @@ class Label(ttk.Label):
         )
         super().__init__(parent, background=background, font=font, **kwargs)
 
-    def pack(self, expand=True, fill=X, side=LEFT, ipady=5,
+    def pack(self, expand=False, fill=X, side=LEFT, ipady=5,
              **kwargs):
         super().pack(expand=expand, fill=fill, side=side, ipady=ipady, **kwargs)
 
@@ -29,6 +29,18 @@ class NameLabel(Label):
 class ValueLabel(Label):
     def pack(self, padx=(0, 30), **kwargs):
         super().pack(padx=padx, **kwargs)
+
+
+class DropDown(ttk.OptionMenu):
+    def __init__(self, parent, tkvar, default, *options):
+        super().__init__(parent, tkvar, default, *options)
+        self._var = tkvar
+
+    def get(self):
+        return self._var.get()
+
+    def pack(self, expand=False, fill=None, side=LEFT, padx=(0, 30), **kwargs):
+        super().pack(expand=expand, fill=fill, side=side, padx=padx, **kwargs)
 
 
 class SourceFrame(ttk.LabelFrame):
@@ -50,32 +62,32 @@ class SourceFrame(ttk.LabelFrame):
             command=self.refresh
         )
         self.refresh_btn.pack(side=LEFT)
-        top_frame.pack(expand=True, fill=BOTH, side=TOP)
+        top_frame.pack(expand=False, fill=X, side=TOP)
         bottom_frame = ttk.Frame(self)
         NameLabel(bottom_frame, text='Data: ').pack()
         # TODO - configure different options for data dropdown
-        self.data_drop = ttk.OptionMenu(
+        self.data_drop = DropDown(
             bottom_frame,
             tk.StringVar(),
             'all',
             ['all']
         )
-        self.data_drop.pack(expand=True, fill=X, side=LEFT)
+        self.data_drop.pack()
         NameLabel(bottom_frame, text='Groupby: ').pack()
         # TODO - configure different options for groupby dropdown
-        self.groupby_drop = ttk.OptionMenu(
+        self.groupby_drop = DropDown(
             bottom_frame,
             tk.StringVar(),
             'None',
             ['None']
         )
-        self.groupby_drop.pack(expand=True, fill=X, side=LEFT)
-        bottom_frame.pack(expand=True, fill=BOTH, side=TOP)
+        self.groupby_drop.pack()
+        bottom_frame.pack(expand=False, fill=BOTH, side=TOP)
 
     def refresh(self):
         print('SourceFrame.refresh()')
 
-    def pack(self, expand=True, fill=BOTH, side=TOP):
+    def pack(self, expand=False, fill=X, side=TOP):
         super().pack(fill=fill, expand=expand, side=side)
 
 
