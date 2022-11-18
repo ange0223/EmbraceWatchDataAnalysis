@@ -1,3 +1,8 @@
+'''
+describewindow.py
+
+Pandas offset aliases: https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+'''
 import tkinter as tk
 from tkinter import ttk, Menu
 from tkinter.constants import *
@@ -50,17 +55,18 @@ class DropDown(ttk.OptionMenu):
 
 # TODO: Update source frame info
 class SourceFrame(ttk.LabelFrame):
-    def __init__(self, *args, text='Source', **kwargs):
-        super().__init__(*args, text=text, **kwargs)
+    def __init__(self, parent, series, agg_by, agg_metric, text='Source',
+                 **kwargs):
+        super().__init__(parent, text=text, **kwargs)
         top_frame = ttk.Frame(self)
         NameLabel(top_frame, text='Series: ').pack()
-        self.series_lbl = ValueLabel(top_frame, text='series')
+        self.series_lbl = ValueLabel(top_frame, text=series)
         self.series_lbl.pack()
         NameLabel(top_frame, text='Aggregate by: ').pack()
-        self.agg_by_lbl = ValueLabel(top_frame, text='aggregate by')
+        self.agg_by_lbl = ValueLabel(top_frame, text=agg_by)
         self.agg_by_lbl.pack()
         NameLabel(top_frame, text='Aggregate metric: ').pack()
-        self.agg_metric_lbl = ValueLabel(top_frame, text='aggregate metric')
+        self.agg_metric_lbl = ValueLabel(top_frame, text=agg_metric)
         self.agg_metric_lbl.pack()
         self.refresh_btn = ttk.Button(
             top_frame,
@@ -197,7 +203,7 @@ class DescribeWindow(tk.Toplevel):
         self.time_max = time_max
         self.title('Description')
         self.geometry('900x600+100+100')
-        self.source_frame = SourceFrame(self)
+        self.source_frame = SourceFrame(self, series, agg_by, agg_metric)
         self.source_frame.pack()
         self.description_frame = DescriptionFrame(self, data, series)
         self.description_frame.pack()
@@ -234,10 +240,9 @@ if __name__ == '__main__':
                      show_temp=False, show_movement=False, show_step=False,
                      show_rest=False, show_wrist=False)
     series = 'Acc magnitude avg'
-    agg_by = 'D' # days
+    interval = '5H'
     agg_metric = 'mean'
     time_min = min(data['Datetime'])
     time_max = max(data['Datetime'])
-    dw = DescribeWindow(data, series, agg_by, agg_metric, time_min,
-                        time_max)
+    dw = DescribeWindow(data, series, interval, agg_metric, time_min, time_max)
     dw.mainloop()
