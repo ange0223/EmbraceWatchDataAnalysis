@@ -48,6 +48,7 @@ class DropDown(ttk.OptionMenu):
         super().pack(expand=expand, fill=fill, side=side, padx=padx, **kwargs)
 
 
+# TODO: Update source frame info
 class SourceFrame(ttk.LabelFrame):
     def __init__(self, *args, text='Source', **kwargs):
         super().__init__(*args, text=text, **kwargs)
@@ -169,6 +170,7 @@ class DescriptionFrame(ttk.LabelFrame):
         self.plot.get_tk_widget().destroy()
 
     def _load_plot(self):
+        # TODO: Fix plot
         fig_size = (7, 4)
         fig_dpi = 100
         fig = Figure(figsize=fig_size, dpi=fig_dpi)
@@ -179,6 +181,7 @@ class DescriptionFrame(ttk.LabelFrame):
         #self.plot.draw()
 
     def _populate(self):
+        # TODO: Add additional stats to summary data
         summary_data = self.data[self.series].describe()
         self.table_frame.update(summary_data)
 
@@ -206,6 +209,7 @@ class DescribeWindow(tk.Toplevel):
         pass
 
     def _update_description(self):
+        # TODO: Use self.agg_metric instead of assuming 'mean()'
         data = self.data[['Datetime', self.series]]
         data = data[
             (data['Datetime'] > self.time_min)
