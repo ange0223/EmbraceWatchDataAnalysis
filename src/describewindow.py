@@ -167,12 +167,15 @@ class PlotFrame(ttk.Frame):
             return
         self._plot.get_tk_widget().destroy()
 
-    def plot(self, data, figsize=(7,5), fig_dpi=100):
+    def plot(self, data, series, figsize=(7,5), fig_dpi=100):
         fig = Figure(figsize=figsize, dpi=fig_dpi)
         self._plot = FigureCanvasTkAgg(fig, master=self)
         self._plot.get_tk_widget().pack(fill=BOTH, expand=False)
         ax = fig.add_subplot()
+        ax.set_xlabel(series)
+        ax.set_ylabel('probability')
         data.plot(kind='bar', ax=ax)
+        fig.tight_layout()
 
 
 class DescriptionFrame(ttk.LabelFrame):
@@ -192,7 +195,7 @@ class DescriptionFrame(ttk.LabelFrame):
         plot_data = data
         plot_data['bin'] = pd.qcut(plot_data[series], bins, duplicates='drop')
         plot_data = plot_data['bin'].value_counts()/len(plot_data['bin'])
-        self.plot_frame.plot(plot_data)
+        self.plot_frame.plot(plot_data, series)
         # TODO: Add additional stats to summary data
         self.table_frame.clear()
         summary_data = data[series].describe()
