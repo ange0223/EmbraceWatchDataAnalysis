@@ -88,6 +88,7 @@ class DisplayApp(tk.Tk):
         self.plots = [] # used to easily reference displayed plots
         self._active_data = None
         self.describe_window = None
+        self.interval = '1min'
         self.title('Data Analyzer')
         self.geometry('900x600+50+50')
         self.resizable(True, True)
@@ -146,12 +147,17 @@ class DisplayApp(tk.Tk):
         ]
 
     def update_describe_window(self):
+        print('DisplayApp.update_describe_window()')
         if self.describe_window is None:
             return
-        # TODO
-        #self.describe_window.update_time(time_min, time_max)
-        # or
-        #self.describe_window.update_data(self.active_data)
+        self.describe_window.update(self._active_data, self.interval)
+
+    def open_describe_window(self, series):
+        print('DisplayApp.open_describe_window()')
+        if self.describe_window:
+            self.describe_window.destroy()
+        self.describe_window = DescribeWindow(series)
+        self.describe_window.update(self._active_data, self.interval)
 
     def open_import_window(self):
         print('DisplayApp.open_import_window()')
@@ -196,7 +202,68 @@ class DisplayApp(tk.Tk):
                     master=self.frame.scrollable_frame)
             self.plots.append(data_plot)
             data_plot.draw()
-            data_plot.get_tk_widget().pack(fill=X, expand=True)
+            plot_widget = data_plot.get_tk_widget()
+            context_menu = SeriesContextMenu(
+                self.frame.scrollable_frame,
+                on_aggregate=lambda x: print('on_aggregate({})'.format(x)),
+                on_describe=lambda c=col_name: self.open_describe_window(c),
+                on_query=lambda : print('on_query()'),
+                on_save_figure=lambda : print('on_save_figure()'),
+                on_draw=lambda : print('on_draw()'),
+                on_delete=lambda : print('on_delete()')
+            )
+            plot_widget.bind('<Button-3>', context_menu.popup)
+            plot_widget.pack(fill=X, expand=True)
+
+
+class SeriesContextMenu(tk.Menu):
+    def __init__(self, parent, on_aggregate=None, on_describe=None,
+                 on_query=None, on_save_figure=None, on_draw=None,
+                 on_delete=None, tearoff=0, **kwargs):
+        super().__init__(parent, tearoff=tearoff, **kwargs)
+        intervals = ('1ms', '5ms', '50ms', '500ms', '1S', '1min', '30min', '1H',
+                     '3H', '6H', 'D', 'W')
+        agg_menu = tk.Menu(self)
+        for interval in intervals:
+            # Must set interval=interval at lambda definition time to overcome
+            # issue of value of interval being captured at runtime (all the
+            # same final value 'W')
+            agg_menu.add_command(
+                label=interval,
+                command=lambda interval=interval: on_aggregate(interval)
+            )
+        self.add_cascade(
+            label='Aggregate',
+            menu=agg_menu
+        )
+        self.add_command(
+            label='Describe',
+            command=on_describe
+        )
+        self.add_command(
+            label='Query',
+            command=on_query
+        )
+        self.add_separator()
+        self.add_command(
+            label='Save figure',
+            command=on_save_figure
+        )
+        self.add_command(
+            label='Draw',
+            command=on_draw
+        )
+        self.add_separator()
+        self.add_command(
+            label='Delete',
+            command=on_delete
+        )
+
+    def popup(self, event):
+        try:
+            self.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.grab_release()
 
 
 
