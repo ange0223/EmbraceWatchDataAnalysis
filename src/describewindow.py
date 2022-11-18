@@ -55,7 +55,7 @@ class DropDown(ttk.OptionMenu):
 
 # TODO: Update source frame info
 class SourceFrame(ttk.LabelFrame):
-    def __init__(self, parent, series, agg_by, agg_metric, text='Source',
+    def __init__(self, parent, series, interval, agg_metric, text='Source',
                  **kwargs):
         super().__init__(parent, text=text, **kwargs)
         top_frame = ttk.Frame(self)
@@ -63,7 +63,7 @@ class SourceFrame(ttk.LabelFrame):
         self.series_lbl = ValueLabel(top_frame, text=series)
         self.series_lbl.pack()
         NameLabel(top_frame, text='Aggregate by: ').pack()
-        self.agg_by_lbl = ValueLabel(top_frame, text=agg_by)
+        self.agg_by_lbl = ValueLabel(top_frame, text=interval)
         self.agg_by_lbl.pack()
         NameLabel(top_frame, text='Aggregate metric: ').pack()
         self.agg_metric_lbl = ValueLabel(top_frame, text=agg_metric)
@@ -193,17 +193,17 @@ class DescriptionFrame(ttk.LabelFrame):
 
 
 class DescribeWindow(tk.Toplevel):
-    def __init__(self, data, series, agg_by, agg_metric, time_min, time_max):
+    def __init__(self, data, series, interval, agg_metric, time_min, time_max):
         super().__init__()
         self.data = data
         self.series = series
-        self.agg_by = agg_by
+        self.interval = interval
         self.agg_metric = agg_metric
         self.time_min = time_min
         self.time_max = time_max
         self.title('Description')
         self.geometry('900x600+100+100')
-        self.source_frame = SourceFrame(self, series, agg_by, agg_metric)
+        self.source_frame = SourceFrame(self, series, interval, agg_metric)
         self.source_frame.pack()
         self.description_frame = DescriptionFrame(self, data, series)
         self.description_frame.pack()
@@ -222,7 +222,7 @@ class DescribeWindow(tk.Toplevel):
             & (data['Datetime'] < self.time_max)
         ]
         data = data.set_index('Datetime')
-        data = data.resample(rule=self.agg_by).mean()
+        data = data.resample(rule=self.interval).mean()
         self.description_frame.update(data)
 
     def update_time(self, time_min, time_max):
