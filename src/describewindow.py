@@ -141,7 +141,8 @@ class DescriptionTable(ttk.Frame):
             label_cell = TableCell(self, text=index, width=6)
             label_cell.grid(column=0, row=row)
             self.cells.append(label_cell)
-            value_cell = TableCell(self, text=str(value), width=max_width)
+            str_value = '{:.3f}'.format(value)
+            value_cell = TableCell(self, text=str_value, width=max_width)
             value_cell.grid(column=1, row=row)
             self.cells.append(value_cell)
 
