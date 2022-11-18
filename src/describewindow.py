@@ -225,8 +225,8 @@ class DescribeWindow(tk.Toplevel):
         self._update_description()
 
     def _update_source(self):
-        # TODO
-        pass
+        # TODO (?)
+        print('DescribeWindow._update_source()')
 
     def _update_description(self):
         # TODO: Use self.agg_metric instead of assuming 'mean()'
