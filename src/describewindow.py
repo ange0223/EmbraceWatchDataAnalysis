@@ -96,20 +96,63 @@ class SourceFrame(ttk.LabelFrame):
         super().pack(fill=fill, expand=expand, side=side)
 
 
+class TableCell(ttk.Label):
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, **kwargs)
+
+    def pack(self, padx=5, pady=5, **kwargs):
+        super().pack(padx=padx, pady=pady, **kwargs)
+
+
+class DescriptionTable(ttk.Frame):
+    def __init__(self, parent, series, **kwargs):
+        super().__init__(parent, **kwargs)
+        self.series = series
+        self.data = None
+        self.cells = []
+        self._populate()
+
+    def update(self, data):
+        self.data = data
+        self._clear()
+        self._populate()
+
+    def _clear(self):
+        for cell in self.cells:
+            cell.destroy()
+
+    def _populate(self):
+        if self.data is None:
+            return
+        header = TableCell(self, text=series)
+        header.grid(column=1, row=0)
+        self.cells.append(header)
+        for row, (index, value) in enumerate(self.data.items(), start=1):
+            label_cell = TableCell(self, text=index)
+            label_cell.grid(column=0, row=row)
+            self.cells.append(label_cell)
+            value_cell = TableCell(self, text=str(value))
+            value_cell.grid(column=1, row=row)
+            self.cells.append(value_cell)
+
+    def pack(self, expand=True, fill=Y, side=LEFT, **kwargs):
+        super().pack(expand=expand, fill=fill, side=side, **kwargs)
+
+
 class DescriptionFrame(ttk.LabelFrame):
-    def __init__(self, parent, data, text='Description', **kwargs):
+    def __init__(self, parent, data, series, text='Description', **kwargs):
         super().__init__(parent, text=text, **kwargs)
         self.data = data
+        self.series = series
         self.plot = None
         self.plot_frame = ttk.Frame(self)
-        self.plot_frame = ttk.Frame(self)
-        self.plot_frame.pack(expand=True, fill=BOTH, side=LEFT)
-        table_frame = ttk.Frame(self)
-        table_frame.pack(expand=True, fill=BOTH, side=RIGHT)
+        self.plot_frame.pack(expand=True, fill=Y, side=LEFT)
+        self.table_frame = DescriptionTable(self, series)
+        self.table_frame.pack()
         self._load_plot()
         self._populate()
 
-    def pack(self, expand=True, fill=BOTH, side=TOP):
+    def pack(self, expand=False, fill=Y, side=TOP):
         super().pack(expand=expand, fill=fill, side=side)
 
     def update(self, data):
@@ -124,7 +167,7 @@ class DescriptionFrame(ttk.LabelFrame):
         self.plot.get_tk_widget().destroy()
 
     def _load_plot(self):
-        fig_size = (9, 4)
+        fig_size = (7, 4)
         fig_dpi = 100
         fig = Figure(figsize=fig_size, dpi=fig_dpi)
         self.plot = FigureCanvasTkAgg(fig, master=self.plot_frame)
@@ -134,7 +177,9 @@ class DescriptionFrame(ttk.LabelFrame):
         #self.plot.draw()
 
     def _populate(self):
-        pass
+        summary_data = self.data[self.series].describe()
+        print(summary_data)
+        self.table_frame.update(summary_data)
 
 
 class DescribeWindow(tk.Toplevel):
@@ -150,7 +195,7 @@ class DescribeWindow(tk.Toplevel):
         self.geometry('900x600+100+100')
         self.source_frame = SourceFrame(self)
         self.source_frame.pack()
-        self.description_frame = DescriptionFrame(self, data)
+        self.description_frame = DescriptionFrame(self, data, series)
         self.description_frame.pack()
         self._update_source()
         self._update_description()
