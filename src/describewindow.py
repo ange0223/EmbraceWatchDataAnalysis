@@ -53,7 +53,6 @@ class DropDown(ttk.OptionMenu):
         super().pack(expand=expand, fill=fill, side=side, padx=padx, **kwargs)
 
 
-# TODO: Update source frame info
 class SourceFrame(ttk.LabelFrame):
     def __init__(self, parent, series, interval, agg_metric, text='Source',
                  **kwargs):
@@ -104,10 +103,16 @@ class SourceFrame(ttk.LabelFrame):
 
 
 class TableCell(ttk.Label):
-    def __init__(self, parent, anchor=W, borderwidth=1, relief='solid',
+    def __init__(self, parent, anchor=W, borderwidth=1, font_bold=False,
+                 font_family='Helvetica', font_size=12, relief='solid',
                  **kwargs):
+        font = '{family} {size}{bold}'.format(
+            family=font_family,
+            size=font_size,
+            bold=' bold' if font_bold else ''
+        )
         super().__init__(parent, anchor=anchor, borderwidth=borderwidth,
-                         relief=relief, **kwargs)
+                         font=font, relief=relief, **kwargs)
 
     def grid(self, sticky='nsew', **kwargs):
         super().grid(sticky=sticky, **kwargs)
@@ -134,11 +139,13 @@ class DescriptionTable(ttk.Frame):
         if self.data is None:
             return
         max_width = max(len(series), 5)
-        header = TableCell(self, text=self.series, width=6+max_width)
+        header = TableCell(self, background='#333333', foreground='#f0f0f0',
+                           text=self.series, width=6+max_width)
         header.grid(column=0, row=0, columnspan=2)
         self.cells.append(header)
         for row, (index, value) in enumerate(self.data.items(), start=1):
-            label_cell = TableCell(self, text=index, width=6)
+            label_cell = TableCell(self, background='#dddddd', text=index,
+                                   width=6)
             label_cell.grid(column=0, row=row)
             self.cells.append(label_cell)
             str_value = '{:.3f}'.format(value)
