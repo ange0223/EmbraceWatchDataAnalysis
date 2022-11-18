@@ -15,7 +15,7 @@ class Label(ttk.Label):
         )
         super().__init__(parent, background=background, font=font, **kwargs)
 
-    def pack(self, expand=False, fill=None, side=LEFT, ipady=5,
+    def pack(self, expand=True, fill=X, side=LEFT, ipady=5,
              **kwargs):
         super().pack(expand=expand, fill=fill, side=side, ipady=ipady, **kwargs)
 
