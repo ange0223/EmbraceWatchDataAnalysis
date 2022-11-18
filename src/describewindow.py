@@ -104,7 +104,8 @@ class SourceFrame(ttk.LabelFrame):
 
 
 class TableCell(ttk.Label):
-    def __init__(self, parent, anchor=W, borderwidth=1, relief='solid', **kwargs):
+    def __init__(self, parent, anchor=W, borderwidth=1, relief='solid',
+                 **kwargs):
         super().__init__(parent, anchor=anchor, borderwidth=borderwidth,
                          relief=relief, **kwargs)
 
@@ -132,14 +133,15 @@ class DescriptionTable(ttk.Frame):
     def _populate(self):
         if self.data is None:
             return
-        header = TableCell(self, text=series)
-        header.grid(column=1, row=0)
+        max_width = max(len(series), 5)
+        header = TableCell(self, text=self.series, width=6+max_width)
+        header.grid(column=0, row=0, columnspan=2)
         self.cells.append(header)
         for row, (index, value) in enumerate(self.data.items(), start=1):
-            label_cell = TableCell(self, text=index)
+            label_cell = TableCell(self, text=index, width=6)
             label_cell.grid(column=0, row=row)
             self.cells.append(label_cell)
-            value_cell = TableCell(self, text=str(value))
+            value_cell = TableCell(self, text=str(value), width=max_width)
             value_cell.grid(column=1, row=row)
             self.cells.append(value_cell)
 
