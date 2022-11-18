@@ -196,7 +196,55 @@ class DisplayApp(tk.Tk):
                     master=self.frame.scrollable_frame)
             self.plots.append(data_plot)
             data_plot.draw()
-            data_plot.get_tk_widget().pack(fill=X, expand=True)
+            plot_widget = data_plot.get_tk_widget()
+            plot_widget.pack(fill=X, expand=True)
+
+
+class SeriesContextMenu(tk.Menu):
+    def __init__(self, parent, on_aggregate=None, on_describe=None,
+                 on_query=None, on_save_figure=None, on_draw=None,
+                 on_delete=None, tear_off=0, **kwargs):
+        super().__init__(parent, tearoff=tearoff, **kwargs)
+        intervals = ('1ms', '5ms', '50ms', '500ms', '1S', '1min', '30min', '1H',
+                     '3H', '6H', 'D', 'W')
+        agg_menu = tk.Menu(self)
+        for interval in intervals:
+            agg_menu.add_command(
+                label=interval,
+                command=lambda : on_aggregate(interval)
+            )
+        self.add_cascade(
+            label='Aggregate',
+            menu=agg_menu
+        )
+        self.add_command(
+            label='Describe',
+            command=on_describe
+        )
+        self.add_command(
+            label='Query',
+            command=on_query
+        )
+        self.add_separator()
+        self.add_command(
+            label='Save figure',
+            command=on_save_figure
+        )
+        self.add_command(
+            label='Draw',
+            command=on_draw
+        )
+        self.add_separator()
+        self.add_command(
+            label='Delete',
+            command=on_delete
+        )
+
+    def popup(event):
+        try:
+            self.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.grav_release()
 
 
 
