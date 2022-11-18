@@ -88,6 +88,7 @@ class DisplayApp(tk.Tk):
         self.plots = [] # used to easily reference displayed plots
         self._active_data = None
         self.describe_window = None
+        self.interval = '1min'
         self.title('Data Analyzer')
         self.geometry('900x600+50+50')
         self.resizable(True, True)
@@ -148,10 +149,13 @@ class DisplayApp(tk.Tk):
     def update_describe_window(self):
         if self.describe_window is None:
             return
-        # TODO
-        #self.describe_window.update_time(time_min, time_max)
-        # or
-        #self.describe_window.update_data(self.active_data)
+        self.describe_window.update(self._active_data, self.interval)
+
+    def open_describe_window(self, series):
+        if self.describe_window:
+            self.describe_window.destroy()
+        self.describe_window = DescribeWindow(series)
+        self.describe_window.update(self._active_data, self.interval)
 
     def open_import_window(self):
         print('DisplayApp.open_import_window()')
@@ -200,7 +204,7 @@ class DisplayApp(tk.Tk):
             context_menu = SeriesContextMenu(
                 self.frame.scrollable_frame,
                 on_aggregate=lambda x: print('on_aggregate({})'.format(x)),
-                on_describe=lambda : print('on_describe()'),
+                on_describe=lambda c=col_name: self.open_describe_window(c),
                 on_query=lambda : print('on_query()'),
                 on_save_figure=lambda : print('on_save_figure()'),
                 on_draw=lambda : print('on_draw()'),

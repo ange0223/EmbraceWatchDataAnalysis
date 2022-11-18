@@ -133,7 +133,7 @@ class DescriptionTable(ttk.Frame):
             cell.destroy()
 
     def populate(self, data, header_text):
-        max_width = max(len(series), 5)
+        max_width = max(len(header_text), 5)
         header = TableCell(self, background='#333333', foreground='#f0f0f0',
                            text=header_text, width=6+max_width)
         header.grid(column=0, row=0, columnspan=2)
@@ -204,18 +204,19 @@ class DescriptionFrame(ttk.LabelFrame):
 
 
 class DescribeWindow(tk.Toplevel):
-    def __init__(self):
+    def __init__(self, series):
         super().__init__()
         self.title('Description')
         self.geometry('900x600+100+100')
+        self.series = series
         self.source_frame = SourceFrame(self)
         self.source_frame.pack()
         self.description_frame = DescriptionFrame(self, series)
         self.description_frame.pack()
 
-    def update(self, data, series, interval, agg_metric):
-        self.source_frame.update(series, interval, agg_metric)
-        self.description_frame.update(data, series)
+    def update(self, data, interval, agg_metric='mean'):
+        self.source_frame.update(self.series, interval, agg_metric)
+        self.description_frame.update(data, self.series)
 
 
 
