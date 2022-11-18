@@ -1,6 +1,11 @@
 import tkinter as tk
 from tkinter import ttk, Menu
 from tkinter.constants import *
+import matplotlib
+matplotlib.use('TkAgg')
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+import pandas as pd
 
 from common import ToplevelWindow
 
@@ -92,26 +97,98 @@ class SourceFrame(ttk.LabelFrame):
 
 
 class DescriptionFrame(ttk.LabelFrame):
-    def __init__(self, *args, text='Description', **kwargs):
-        super().__init__(*args, text=text, **kwargs)
+    def __init__(self, parent, data, text='Description', **kwargs):
+        super().__init__(parent, text=text, **kwargs)
+        self.data = data
+        self.plot = None
+        self.plot_frame = ttk.Frame(self)
+        self.plot_frame = ttk.Frame(self)
+        self.plot_frame.pack(expand=True, fill=BOTH, side=LEFT)
+        table_frame = ttk.Frame(self)
+        table_frame.pack(expand=True, fill=BOTH, side=RIGHT)
+        self._load_plot()
+        self._populate()
 
     def pack(self, expand=True, fill=BOTH, side=TOP):
         super().pack(expand=expand, fill=fill, side=side)
 
+    def update(self, data):
+        self.data = data
+        self._clear_plot()
+        self._load_plot()
+        self._populate()
+
+    def _clear_plot(self):
+        if self.plot is None:
+            return
+        self.plot.get_tk_widget().destroy()
+
+    def _load_plot(self):
+        fig_size = (9, 4)
+        fig_dpi = 100
+        fig = Figure(figsize=fig_size, dpi=fig_dpi)
+        self.plot = FigureCanvasTkAgg(fig, master=self.plot_frame)
+        self.plot.get_tk_widget().pack(fill=BOTH, expand=True)
+        ax = fig.add_subplot()
+        self.data.plot(kind='bar', ax=ax)
+        #self.plot.draw()
+
+    def _populate(self):
+        pass
+
 
 class DescribeWindow(tk.Toplevel):
-    def __init__(self, data):
+    def __init__(self, data, series, agg_by, agg_metric, time_min, time_max):
         super().__init__()
         self.data = data
+        self.series = series
+        self.agg_by = agg_by
+        self.agg_metric = agg_metric
+        self.time_min = time_min
+        self.time_max = time_max
         self.title('Description')
         self.geometry('900x600+100+100')
         self.source_frame = SourceFrame(self)
         self.source_frame.pack()
-        self.description_frame = DescriptionFrame(self)
+        self.description_frame = DescriptionFrame(self, data)
         self.description_frame.pack()
+        self._update_source()
+        self._update_description()
+
+    def _update_source(self):
+        # TODO
+        pass
+
+    def _update_description(self):
+        data = self.data[['Datetime', self.series]]
+        data = data[
+            (data['Datetime'] > self.time_min)
+            & (data['Datetime'] < self.time_max)
+        ]
+        data = data.set_index('Datetime')
+        data = data.resample(rule=self.agg_by).mean()
+        self.description_frame.update(data)
+
+    def update_time(self, time_min, time_max):
+        self.time_min = time_min
+        self.time_max = time_max
+        self._update_source()
+        self._update_description()
 
 
 
 if __name__ == '__main__':
-    dw = DescribeWindow(None)
+    from data import load_data
+    data = load_data('Dataset', users=310, start_time=None, end_time=None,
+                     utc_mode=False, show_acc=True, show_eda=False,
+                     show_temp=False, show_movement=False, show_step=False,
+                     show_rest=False, show_wrist=False)
+    #print(data.head())
+    series = 'Acc magnitude avg'
+    agg_by = 'D' # days
+    agg_metric = 'mean'
+    time_min = min(data['Datetime'])
+    time_max = max(data['Datetime'])
+    dw = DescribeWindow(data, series, agg_by, agg_metric, time_min,
+                        time_max)
     dw.mainloop()
