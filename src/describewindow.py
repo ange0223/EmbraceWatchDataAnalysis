@@ -54,18 +54,18 @@ class DropDown(ttk.OptionMenu):
 
 
 class SourceFrame(ttk.LabelFrame):
-    def __init__(self, parent, series, interval, agg_metric, text='Source',
+    def __init__(self, parent, text='Source',
                  **kwargs):
         super().__init__(parent, text=text, **kwargs)
         top_frame = ttk.Frame(self)
         NameLabel(top_frame, text='Series: ').pack()
-        self.series_lbl = ValueLabel(top_frame, text=series)
+        self.series_lbl = ValueLabel(top_frame, text='series')
         self.series_lbl.pack()
         NameLabel(top_frame, text='Aggregate by: ').pack()
-        self.agg_by_lbl = ValueLabel(top_frame, text=interval)
+        self.agg_by_lbl = ValueLabel(top_frame, text='interval')
         self.agg_by_lbl.pack()
         NameLabel(top_frame, text='Aggregate metric: ').pack()
-        self.agg_metric_lbl = ValueLabel(top_frame, text=agg_metric)
+        self.agg_metric_lbl = ValueLabel(top_frame, text='agg_metric')
         self.agg_metric_lbl.pack()
         self.refresh_btn = ttk.Button(
             top_frame,
@@ -98,6 +98,11 @@ class SourceFrame(ttk.LabelFrame):
     def refresh(self):
         print('SourceFrame.refresh()')
 
+    def update(self, series, interval, agg_metric):
+        self.series_lbl.config(text=series)
+        self.agg_by_lbl.config(text=interval)
+        self.agg_metric_lbl.config(text=agg_metric)
+
     def pack(self, expand=False, fill=X, side=TOP):
         super().pack(fill=fill, expand=expand, side=side)
 
@@ -119,7 +124,7 @@ class TableCell(ttk.Label):
 
 
 class DescriptionTable(ttk.Frame):
-    def __init__(self, parent, series, **kwargs):
+    def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
         self.cells = []
 
@@ -153,97 +158,83 @@ class PlotFrame(ttk.Frame):
         super().__init__(parent, **kwargs)
         self._plot = None
 
-    def pack(self, expand=True, fill=Y, side=LEFT, **kwargs):
-        super().pack(expand=expand, fill=fill, side=side, **kwargs)
+    def pack(self, expand=True, fill=BOTH, side=LEFT, padx=5, pady=5, **kwargs):
+        super().pack(expand=expand, fill=fill, side=side, padx=padx, pady=pady,
+                     **kwargs)
 
     def clear(self):
         if self._plot is None:
             return
         self._plot.get_tk_widget().destroy()
 
-    def plot(self, data, figsize=(7,4), fig_dpi=100):
+    def plot(self, data, figsize=(7,5), fig_dpi=100):
         fig = Figure(figsize=figsize, dpi=fig_dpi)
         self._plot = FigureCanvasTkAgg(fig, master=self)
-        self._plot.get_tk_widget().pack(fill=BOTH, expand=True)
+        self._plot.get_tk_widget().pack(fill=BOTH, expand=False)
         ax = fig.add_subplot()
         data.plot(kind='bar', ax=ax)
 
 
 class DescriptionFrame(ttk.LabelFrame):
-    def __init__(self, parent, series, text='Description', **kwargs):
+    def __init__(self, parent, text='Description', **kwargs):
         super().__init__(parent, text=text, **kwargs)
-        self.series = series
         self.plot_frame = PlotFrame(self)
         self.plot_frame.pack()
-        self.table_frame = DescriptionTable(self, series)
+        self.table_frame = DescriptionTable(self)
         self.table_frame.pack()
 
-    def pack(self, expand=False, fill=Y, side=TOP):
+    def pack(self, expand=True, fill=Y, side=TOP):
         super().pack(expand=expand, fill=fill, side=side)
 
-    def update(self, data):
-        sub_data = data[self.series]
+    def update(self, data, series, bins=30):
         self.plot_frame.clear()
-        frequency_data = sub_data.value_counts()
-        self.plot_frame.plot(frequency_data)
+        #frequency_data = sub_data.groupby(pd.qcut(sub_data, bins)).size()#.value_counts()
+        plot_data = data
+        plot_data['bin'] = pd.qcut(plot_data[series], bins, duplicates='drop')
+        plot_data = plot_data['bin'].value_counts()/len(plot_data['bin'])
+        self.plot_frame.plot(plot_data)
         # TODO: Add additional stats to summary data
         self.table_frame.clear()
-        summary_data = sub_data.describe()
-        self.table_frame.populate(summary_data, self.series)
+        summary_data = data[series].describe()
+        self.table_frame.populate(summary_data, series)
 
 
 
 class DescribeWindow(tk.Toplevel):
-    def __init__(self, data, series, interval, agg_metric, time_min, time_max):
+    def __init__(self):
         super().__init__()
-        self.data = data
-        self.series = series
-        self.interval = interval
-        self.agg_metric = agg_metric
-        self.time_min = time_min
-        self.time_max = time_max
         self.title('Description')
         self.geometry('900x600+100+100')
-        self.source_frame = SourceFrame(self, series, interval, agg_metric)
+        self.source_frame = SourceFrame(self)
         self.source_frame.pack()
         self.description_frame = DescriptionFrame(self, series)
         self.description_frame.pack()
-        self._update_source()
-        self._update_description()
 
-    def _update_source(self):
-        # TODO (?)
-        print('DescribeWindow._update_source()')
-
-    def _update_description(self):
-        # TODO: Use self.agg_metric instead of assuming 'mean()'
-        data = self.data[['Datetime', self.series]]
-        data = data[
-            (data['Datetime'] > self.time_min)
-            & (data['Datetime'] < self.time_max)
-        ]
-        data = data.set_index('Datetime')
-        data = data.resample(rule=self.interval).mean()
-        self.description_frame.update(data)
-
-    def update_time(self, time_min, time_max):
-        self.time_min = time_min
-        self.time_max = time_max
-        self._update_source()
-        self._update_description()
+    def update(self, data, series, interval, agg_metric):
+        self.source_frame.update(series, interval, agg_metric)
+        self.description_frame.update(data, series)
 
 
 
 if __name__ == '__main__':
     from data import load_data
     data = load_data('Dataset', users=310, start_time=None, end_time=None,
-                     utc_mode=False, show_acc=True, show_eda=False,
-                     show_temp=False, show_movement=False, show_step=False,
-                     show_rest=False, show_wrist=False)
-    series = 'Acc magnitude avg'
-    interval = '5H'
+                     utc_mode=False, show_acc=True, show_eda=True,
+                     show_temp=True, show_movement=True, show_step=True,
+                     show_rest=True, show_wrist=True)
+
+    series = 'Movement intensity'
+    interval = '30min'
     agg_metric = 'mean'
     time_min = min(data['Datetime'])
     time_max = max(data['Datetime'])
-    dw = DescribeWindow(data, series, interval, agg_metric, time_min, time_max)
+    dw_data = data[['Datetime', series]]
+    dw_data = dw_data[
+        (dw_data['Datetime'] > time_min)
+        & (dw_data['Datetime'] < time_max)
+    ]
+    dw_data = dw_data.set_index('Datetime')
+    dw_data = dw_data.resample(rule=interval).mean()
+    dw = DescribeWindow()
+    dw.update(dw_data, series, interval, agg_metric)
     dw.mainloop()
