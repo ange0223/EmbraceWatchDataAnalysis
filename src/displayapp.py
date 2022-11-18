@@ -197,21 +197,34 @@ class DisplayApp(tk.Tk):
             self.plots.append(data_plot)
             data_plot.draw()
             plot_widget = data_plot.get_tk_widget()
+            context_menu = SeriesContextMenu(
+                self.frame.scrollable_frame,
+                on_aggregate=lambda x: print('on_aggregate({})'.format(x)),
+                on_describe=lambda : print('on_describe()'),
+                on_query=lambda : print('on_query()'),
+                on_save_figure=lambda : print('on_save_figure()'),
+                on_draw=lambda : print('on_draw()'),
+                on_delete=lambda : print('on_delete()')
+            )
+            plot_widget.bind('<Button-3>', context_menu.popup)
             plot_widget.pack(fill=X, expand=True)
 
 
 class SeriesContextMenu(tk.Menu):
     def __init__(self, parent, on_aggregate=None, on_describe=None,
                  on_query=None, on_save_figure=None, on_draw=None,
-                 on_delete=None, tear_off=0, **kwargs):
+                 on_delete=None, tearoff=0, **kwargs):
         super().__init__(parent, tearoff=tearoff, **kwargs)
         intervals = ('1ms', '5ms', '50ms', '500ms', '1S', '1min', '30min', '1H',
                      '3H', '6H', 'D', 'W')
         agg_menu = tk.Menu(self)
         for interval in intervals:
+            # Must set interval=interval at lambda definition time to overcome
+            # issue of value of interval being captured at runtime (all the
+            # same final value 'W')
             agg_menu.add_command(
                 label=interval,
-                command=lambda : on_aggregate(interval)
+                command=lambda interval=interval: on_aggregate(interval)
             )
         self.add_cascade(
             label='Aggregate',
@@ -240,11 +253,11 @@ class SeriesContextMenu(tk.Menu):
             command=on_delete
         )
 
-    def popup(event):
+    def popup(self, event):
         try:
             self.tk_popup(event.x_root, event.y_root)
         finally:
-            self.grav_release()
+            self.grab_release()
 
 
 
