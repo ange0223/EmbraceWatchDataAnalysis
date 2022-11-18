@@ -135,8 +135,9 @@ class DescriptionTable(ttk.Frame):
             value_cell.grid(column=1, row=row)
             self.cells.append(value_cell)
 
-    def pack(self, expand=True, fill=Y, side=LEFT, **kwargs):
-        super().pack(expand=expand, fill=fill, side=side, **kwargs)
+    def pack(self, expand=True, fill=Y, side=LEFT, padx=20, pady=20, **kwargs):
+        super().pack(expand=expand, fill=fill, side=side, padx=padx, pady=pady,
+                     **kwargs)
 
 
 class DescriptionFrame(ttk.LabelFrame):
@@ -178,7 +179,6 @@ class DescriptionFrame(ttk.LabelFrame):
 
     def _populate(self):
         summary_data = self.data[self.series].describe()
-        print(summary_data)
         self.table_frame.update(summary_data)
 
 
@@ -228,7 +228,6 @@ if __name__ == '__main__':
                      utc_mode=False, show_acc=True, show_eda=False,
                      show_temp=False, show_movement=False, show_step=False,
                      show_rest=False, show_wrist=False)
-    #print(data.head())
     series = 'Acc magnitude avg'
     agg_by = 'D' # days
     agg_metric = 'mean'
