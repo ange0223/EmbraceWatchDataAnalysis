@@ -211,7 +211,7 @@ class DescribeWindow(tk.Toplevel):
         self.series = series
         self.source_frame = SourceFrame(self)
         self.source_frame.pack()
-        self.description_frame = DescriptionFrame(self, series)
+        self.description_frame = DescriptionFrame(self)
         self.description_frame.pack()
 
     def update(self, data, interval, agg_metric='mean'):
