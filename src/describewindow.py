@@ -158,17 +158,37 @@ class DescriptionTable(ttk.Frame):
                      **kwargs)
 
 
+class PlotFrame(ttk.Frame):
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, **kwargs)
+        self._plot = None
+
+    def pack(self, expand=True, fill=Y, side=LEFT, **kwargs):
+        super().pack(expand=expand, fill=fill, side=side, **kwargs)
+
+    def clear(self):
+        if self._plot is None:
+            return
+        self._plot.get_tk_widget().destroy()
+
+    def plot(self, data, figsize=(7,4), fig_dpi=100):
+        fig = Figure(figsize=figsize, dpi=fig_dpi)
+        self._plot = FigureCanvasTkAgg(fig, master=self)
+        self._plot.get_tk_widget().pack(fill=BOTH, expand=True)
+        ax = fig.add_subplot()
+        data.plot(kind='bar', ax=ax)
+
+
 class DescriptionFrame(ttk.LabelFrame):
     def __init__(self, parent, data, series, text='Description', **kwargs):
         super().__init__(parent, text=text, **kwargs)
         self.data = data
         self.series = series
-        self.plot = None
-        self.plot_frame = ttk.Frame(self)
-        self.plot_frame.pack(expand=True, fill=Y, side=LEFT)
+        self.plot_frame = PlotFrame(self)
+        self.plot_frame.plot(self.data)
+        self.plot_frame.pack()
         self.table_frame = DescriptionTable(self, series)
         self.table_frame.pack()
-        self._load_plot()
         self._populate()
 
     def pack(self, expand=False, fill=Y, side=TOP):
@@ -176,25 +196,9 @@ class DescriptionFrame(ttk.LabelFrame):
 
     def update(self, data):
         self.data = data
-        self._clear_plot()
-        self._load_plot()
+        self.plot_frame.clear()
+        self.plot_frame.plot(self.data)
         self._populate()
-
-    def _clear_plot(self):
-        if self.plot is None:
-            return
-        self.plot.get_tk_widget().destroy()
-
-    def _load_plot(self):
-        # TODO: Fix plot
-        fig_size = (7, 4)
-        fig_dpi = 100
-        fig = Figure(figsize=fig_size, dpi=fig_dpi)
-        self.plot = FigureCanvasTkAgg(fig, master=self.plot_frame)
-        self.plot.get_tk_widget().pack(fill=BOTH, expand=True)
-        ax = fig.add_subplot()
-        self.data.plot(kind='bar', ax=ax)
-        #self.plot.draw()
 
     def _populate(self):
         # TODO: Add additional stats to summary data
