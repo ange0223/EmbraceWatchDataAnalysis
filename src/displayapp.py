@@ -10,6 +10,7 @@ import numpy as np
 from datetime import datetime
 
 from data import load_data, get_subject_ids
+from exportwindow import ExportWindow
 from importwindow import ImportWindow
 from describewindow import DescribeWindow
 from common import ScrollableLabelFrame
@@ -97,7 +98,7 @@ class DisplayApp(tk.Tk):
         data_menu = DataMenu(
             menubar,
             on_import=self.open_import_window,
-            on_export=lambda : print('Data > Export pressed'),
+            on_export=self.open_export_window,
             on_clear=self.clear
         )
         time_series_menu = TimeSeriesMenu(
@@ -163,6 +164,13 @@ class DisplayApp(tk.Tk):
         top = ImportWindow(self.subject_ids, on_submit=self.on_import_submit)
         top.lift()
         top.mainloop()
+
+    def open_export_window(self):
+        print('DisplayApp.open_export_window()')
+        top = ExportWindow()
+        top.save_file()
+        #top.lift()
+        #top.mainloop()
 
     def on_import_submit(self, options):
         print('DisplayApp.on_import_submit()')
