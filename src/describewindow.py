@@ -197,7 +197,23 @@ class DescriptionFrame(ttk.LabelFrame):
         self.plot_frame.plot(plot_data, series)
         # TODO: Add additional stats to summary data
         self.table_frame.clear()
-        summary_data = data[series].describe()
+        #summary_data = data[series].describe()
+        summary_data = pd.Series({
+            'count': data[series].count(),
+            'mean': data[series].mean(),
+            'std': data[series].std(),
+            'min': data[series].min(),
+            '0.2%': data[series].quantile(0.002),
+            '2.5%': data[series].quantile(0.025),
+            '25%': data[series].quantile(0.25),
+            '50%': data[series].quantile(0.975),
+            '75%': data[series].quantile(0.75),
+            '99.9%': data[series].quantile(0.999),
+            'max': data[series].max(),
+            'kurt': data[series].kurt(),
+            'skew': data[series].skew(),
+            'TFL': -1
+        })
         self.table_frame.populate(summary_data, series)
 
 
