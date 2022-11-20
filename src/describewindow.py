@@ -191,7 +191,6 @@ class DescriptionFrame(ttk.LabelFrame):
 
     def update(self, data, series, bins=30):
         self.plot_frame.clear()
-        #frequency_data = sub_data.groupby(pd.qcut(sub_data, bins)).size()#.value_counts()
         plot_data = data
         plot_data['bin'] = pd.qcut(plot_data[series], bins, duplicates='drop')
         plot_data = plot_data['bin'].value_counts()/len(plot_data['bin'])
