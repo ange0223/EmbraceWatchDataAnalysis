@@ -143,7 +143,11 @@ class DescriptionTable(ttk.Frame):
                                    width=6)
             label_cell.grid(column=0, row=row)
             self.cells.append(label_cell)
-            str_value = '{:.3f}'.format(value)
+            # Leave off decimal points if they're zero
+            if value == int(value):
+                str_value = '{}'.format(int(value))
+            else:
+                str_value = '{:.3f}'.format(value)
             value_cell = TableCell(self, text=str_value, width=max_width)
             value_cell.grid(column=1, row=row)
             self.cells.append(value_cell)
