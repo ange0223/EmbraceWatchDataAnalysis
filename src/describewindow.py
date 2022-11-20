@@ -215,8 +215,7 @@ class DescriptionFrame(ttk.LabelFrame):
             '99.9%': data[series].quantile(0.999),
             'max': data[series].max(),
             'kurt': data[series].kurt(),
-            'skew': data[series].skew(),
-            'TFL': -1
+            'skew': data[series].skew()
         })
         self.table_frame.populate(summary_data, series)
 
