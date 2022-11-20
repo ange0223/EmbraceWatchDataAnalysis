@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, Menu
 from tkinter.constants import *
+from tkinter import messagebox
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -167,10 +168,11 @@ class DisplayApp(tk.Tk):
 
     def open_export_window(self):
         print('DisplayApp.open_export_window()')
-        top = ExportWindow()
-        top.save_file()
-        #top.lift()
-        #top.mainloop()
+        if(type(self.active_data) != pd.DataFrame or self.active_data.empty):
+            messagebox.showerror('CSV Error', 'Error: No data to export')
+        else:
+            top = ExportWindow(self.active_data)
+            top.save_file()
 
     def on_import_submit(self, options):
         print('DisplayApp.on_import_submit()')

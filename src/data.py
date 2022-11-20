@@ -1,6 +1,9 @@
 import pandas as pd
 import os
 import sys
+from tkinter import filedialog
+from tkinter.filedialog import asksaveasfile
+from tkinter.filedialog import askdirectory
 
 # NOTE: should establish a naming convention between users and subjects
 
@@ -108,6 +111,10 @@ def load_data(data_path, users=None, start_time=None, end_time=None,
     if not show_wrist:
         del data['On Wrist']
     return data
+
+def data_to_csv(data): #currently not called, pd.to_csv currently being used in exportwindow
+    #save_path = asksaveasfile(mode='a', initialfile = 'untitled.csv', defaultextension=".csv")
+    data.to_csv(save_path.name)
 
 
 if __name__ == '__main__':
