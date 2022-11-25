@@ -238,9 +238,9 @@ class DisplayApp(tk.Tk):
                 on_aggregate=lambda x: print('on_aggregate({})'.format(x)),
                 on_describe=lambda c=col_name: self.open_describe_window(c),
                 on_query=lambda : print('on_query()'),
-                on_save_figure=lambda : self.on_save_figure_submit(fig), #print('on_save_figure()'
+                on_save_figure=lambda f=fig: self.on_save_figure_submit(f),
                 on_draw=lambda : print('on_draw()'),
-                on_delete=lambda : self.on_delete_submit(col_name) #print('on_delete()')  
+                on_delete=lambda : self.on_delete_submit(col_name) #print('on_delete()')
             )
             plot_widget.bind('<Button-3>', context_menu.popup)
             plot_widget.pack(fill=X, expand=True)
