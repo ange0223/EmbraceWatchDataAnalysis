@@ -89,10 +89,14 @@ def load_data(data_path, users=None, start_time=None, end_time=None,
         row['Datetime'] = dt + offset
         return row
     data = data.apply(time_shift, axis=1)
+    if utc_mode:
+        datetime_col = 'Datetime (UTC)'
+    else:
+        datetime_col = 'Datetime'
     if start_time:
-        data = data[data['Datetime'] > start_time]
+        data = data[data[datetime_col] > start_time]
     if end_time:
-        data = data[data['Datetime'] < end_time]
+        data = data[data[datetime_col] < end_time]
     if not show_acc:
         del data['Acc magnitude avg']
     if not show_eda:
