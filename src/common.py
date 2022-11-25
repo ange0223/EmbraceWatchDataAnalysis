@@ -10,13 +10,6 @@ def str_to_datetime(string):
     return datetime.strptime(string, DATE_FMT)
 
 
-class ToplevelWindow(tk.Toplevel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.resizable(False, False)
-        self.configure(background='#e8f4f8')
-
-
 class ScrollableLabelFrame(ttk.LabelFrame):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
