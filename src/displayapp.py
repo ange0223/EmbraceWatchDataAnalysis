@@ -263,6 +263,8 @@ class DisplayApp(tk.Tk):
 
     def load_plots(self):
         print('DisplayApp.load_plots()')
+        if self.data is None:
+            return
         # Get column names to show
         figure_cols = set(self.active_data.columns)
         ignore_cols = {'Datetime', 'Datetime (UTC)', 'Timezone (minutes)',
