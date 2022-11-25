@@ -113,10 +113,6 @@ def load_data(data_path, users=None, start_time=None, end_time=None,
         del data['On Wrist']
     return data
 
-def data_to_csv(data): #currently not called, pd.to_csv currently being used in exportwindow
-    #save_path = asksaveasfile(mode='a', initialfile = 'untitled.csv', defaultextension=".csv")
-    data.to_csv(save_path.name)
-
 
 if __name__ == '__main__':
     usage_msg = 'Usage: "{} [-q]"'.format(sys.argv[0])
