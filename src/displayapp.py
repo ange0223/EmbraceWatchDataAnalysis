@@ -11,7 +11,7 @@ import numpy as np
 from datetime import datetime
 
 from data import load_data, get_subject_ids
-from exportwindow import ExportWindow
+from exportwindow import open_save_dialog
 from importwindow import ImportWindow
 from describewindow import DescribeWindow
 from common import ScrollableLabelFrame
@@ -110,7 +110,7 @@ class DisplayApp(tk.Tk):
         data_menu = DataMenu(
             menubar,
             on_import=self.open_import_window,
-            on_export=self.open_export_window,
+            on_export=self.open_export_dialog,
             on_clear=self.clear_all
         )
         time_series_menu = TimeSeriesMenu(
@@ -177,13 +177,12 @@ class DisplayApp(tk.Tk):
         top.lift()
         top.mainloop()
 
-    def open_export_window(self):
+    def open_export_dialog(self):
         print('DisplayApp.open_export_window()')
         if self.active_data is None:
             messagebox.showerror('CSV Error', 'Error: No data to export')
         else:
-            top = ExportWindow(self.active_data)
-            top.save_file()
+            open_save_dialog(self.active_data)
 
     def on_import_submit(self, options):
         print('DisplayApp.on_import_submit()')
