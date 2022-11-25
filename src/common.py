@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-import datetime
+from datetime import datetime
 
 
 DATE_FMT = '%Y-%m-%d %H:%M:%S'
