@@ -76,7 +76,6 @@ class TimeRangeSelector(ttk.Frame):
     def apply(self):
         if not self.apply_callback:
             return
-        print(self.apply_callback)
         self.apply_callback(self.time_min_entry.get(), self.time_max_entry.get())
 
     def get(self):
