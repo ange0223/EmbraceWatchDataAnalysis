@@ -14,7 +14,7 @@ from data import load_data, get_subject_ids
 from exportwindow import open_save_dialog
 from importwindow import ImportWindow
 from describewindow import DescribeWindow
-from common import DATE_FMT, ScrollableLabelFrame
+from common import str_to_datetime, ScrollableLabelFrame
 from tkinter import filedialog
 from tkinter.filedialog import asksaveasfile
 
@@ -76,7 +76,9 @@ class TimeRangeSelector(ttk.Frame):
     def apply(self):
         if not self.apply_callback:
             return
-        self.apply_callback(self.time_min_entry.get(), self.time_max_entry.get())
+        time_min = str_to_datetime(self.time_min_entry.get())
+        time_max = str_to_datetime(self.time_max.entry.get())
+        self.apply_callback(time_min, time_max)
 
     def get(self):
         return self.time_min_entry.get(), self.time_max_entry.get()
