@@ -179,7 +179,7 @@ class DisplayApp(tk.Tk):
 
     def open_export_window(self):
         print('DisplayApp.open_export_window()')
-        if(type(self.active_data) != pd.DataFrame or self.active_data.empty):
+        if self.active_data is None:
             messagebox.showerror('CSV Error', 'Error: No data to export')
         else:
             top = ExportWindow(self.active_data)
