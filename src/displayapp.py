@@ -14,7 +14,7 @@ from data import load_data, get_subject_ids
 from exportwindow import open_save_dialog
 from importwindow import ImportWindow
 from describewindow import DescribeWindow
-from common import ScrollableLabelFrame
+from common import DATE_FMT, ScrollableLabelFrame
 from tkinter import filedialog
 from tkinter.filedialog import asksaveasfile
 
