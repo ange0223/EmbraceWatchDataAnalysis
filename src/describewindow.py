@@ -12,8 +12,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import pandas as pd
 
-from common import ToplevelWindow
-
 
 class Label(ttk.Label):
     def __init__(self, parent, background='#e8f4f8', font_family='Helvetica',
