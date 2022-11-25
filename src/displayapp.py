@@ -90,6 +90,12 @@ class TimeRangeSelector(ttk.Frame):
     def get(self):
         return self.time_min_entry.get(), self.time_max_entry.get()
 
+    def get_min(self):
+        return self.time_min_entry.get()
+
+    def get_max(self):
+        return self.time_max_entry.get()
+
     def set(self, time_min, time_max):
         self.time_min_entry.set(time_min)
         self.time_max_entry.set(time_max)
@@ -167,8 +173,8 @@ class DisplayApp(tk.Tk):
     def toggle_utc(self):
         print('DisplayApp.toggle_utc()')
         self.utc_mode = not self.utc_mode
-        time_min = str_to_datetime(self.time_selector.time_min_entry.get())
-        time_max = str_to_datetime(self.time_selector.time_max_entry.get())
+        time_min = str_to_datetime(self.time_selector.get_min())
+        time_max = str_to_datetime(self.time_selector.get_max())
         offset = timedelta(minutes=int(self.data['Timezone (minutes)'].iloc[0]))
         if self.utc_mode:
             time_min -= offset
