@@ -2,6 +2,9 @@ import tkinter as tk
 from tkinter import ttk
 
 
+DATE_FMT = '%Y-%m-%d %H:%M:%S'
+
+
 class ToplevelWindow(tk.Toplevel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

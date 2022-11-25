@@ -4,9 +4,7 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, Menu
 
-from common import ToplevelWindow
-
-DATE_FMT = '%Y-%m-%d %H:%M:%S'
+from common import DATE_FMT, ToplevelWindow
 
 
 class CommonLabel(ttk.Label):
