@@ -105,6 +105,7 @@ class DisplayApp(tk.Tk):
         self.geometry('900x600+50+50')
         self.resizable(True, True)
         self.configure(background='#e8f4f8')
+        self.utc_mode = False
 
         menubar = Menu(self)
         data_menu = DataMenu(
@@ -149,6 +150,10 @@ class DisplayApp(tk.Tk):
         self.load_plots()
         self.update_describe_window()
 
+    @property
+    def datetime_col(self):
+        return 'Datetime (UTC)' if self.utc_mode else 'Datetime'
+
     def on_time_apply(self, time_min, time_max):
         print('DisplayApp.on_time_apply()')
         if self.data is None:
@@ -187,6 +192,7 @@ class DisplayApp(tk.Tk):
     def on_import_submit(self, options):
         print('DisplayApp.on_import_submit()')
         self.data = load_data(self.data_path, **options)
+        self.utc_mode = options['utc_mode']
         time_min = min(self.data['Datetime'])
         time_max = max(self.data['Datetime'])
         self.time_selector.set(time_min, time_max)
