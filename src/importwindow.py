@@ -4,7 +4,7 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, Menu
 
-from common import DATE_FMT, ToplevelWindow
+from common import str_to_datetime, ToplevelWindow
 
 
 class CommonLabel(ttk.Label):
@@ -174,8 +174,8 @@ class ImportWindow(ToplevelWindow):
         user_input = {
             #'users': map(int, self.users_entry.get().split(',')),
             'users': self.user_drop.get(),
-            'start_time': datetime.strptime(self.start_entry.get(), DATE_FMT),
-            'end_time': datetime.strptime(self.end_entry.get(), DATE_FMT),
+            'start_time': str_to_datetime(self.start_entry.get()),
+            'end_time': str_to_datetime(self.end_entry.get()),
             'utc_mode': self.utc_checkbtn.get(),
             'show_acc': self.acc_checkbtn.get(),
             'show_eda': self.eda_checkbtn.get(),
