@@ -4,7 +4,7 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, Menu
 
-from common import str_to_datetime, Checkbutton, ToplevelWindow
+from common import str_to_datetime, Checkbutton
 
 
 class CommonLabel(ttk.Label):
@@ -61,9 +61,11 @@ class CommonSubmitButton(ttk.Button):
 
 
 # GUI for Our project
-class ImportWindow(ToplevelWindow):
+class ImportWindow(tk.Toplevel):
     def __init__(self, subject_ids, on_submit=None):
         super().__init__()
+        self.resizable(False, False)
+        self.configure(background='#e8f4f8')
         self.submit_callback = on_submit
         self.title('EmbraceWatch Data Analysis')
         self.geometry('500x600+100+100')
