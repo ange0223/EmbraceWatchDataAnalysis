@@ -4,7 +4,7 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, Menu
 
-from common import str_to_datetime, ToplevelWindow
+from common import str_to_datetime, Checkbutton, ToplevelWindow
 
 
 class CommonLabel(ttk.Label):
@@ -32,18 +32,7 @@ class CommonEntry(ttk.Entry):
                      pady=pady, **kwargs)
 
 
-class CommonCheckbutton(ttk.Checkbutton):
-    def __init__(self, parent, **kwargs):
-        self._var = tk.IntVar()
-        super().__init__(parent, variable=self._var,
-                       **kwargs)
-
-    def get(self):
-        return self._var.get()
-
-    def set(self, val):
-        self._var.set(val)
-
+class CommonCheckbutton(Checkbutton):
     def grid(self, column=1, row=0, sticky=tk.W, padx=5, pady=5, **kwargs):
         super().grid(column=column, row=row, sticky=sticky, padx=padx,
                      pady=pady, **kwargs)

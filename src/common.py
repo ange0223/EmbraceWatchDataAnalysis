@@ -37,3 +37,16 @@ class ScrollableLabelFrame(ttk.LabelFrame):
         canvas.configure(yscrollcommand=scrollbar.set)
         canvas.pack(side='left', fill='both', expand=True)
         scrollbar.pack(side='right', fill='y')
+
+
+class Checkbutton(ttk.Checkbutton):
+    def __init__(self, parent, **kwargs):
+        self._var = tk.IntVar()
+        super().__init__(parent, variable=self._var,
+                       **kwargs)
+
+    def get(self):
+        return self._var.get()
+
+    def set(self, val):
+        self._var.set(val)
