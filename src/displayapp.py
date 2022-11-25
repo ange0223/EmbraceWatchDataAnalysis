@@ -77,7 +77,7 @@ class TimeRangeSelector(ttk.Frame):
         if not self.apply_callback:
             return
         time_min = str_to_datetime(self.time_min_entry.get())
-        time_max = str_to_datetime(self.time_max.entry.get())
+        time_max = str_to_datetime(self.time_max_entry.get())
         self.apply_callback(time_min, time_max)
 
     def get(self):
