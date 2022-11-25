@@ -100,8 +100,8 @@ class TimeRangeSelector(ttk.Frame):
         self.time_min_entry.set(time_min)
         self.time_max_entry.set(time_max)
 
-    def pack(self):
-        super().pack(fill=BOTH, side=TOP)
+    def pack(self, fill=BOTH, side=TOP, **kwargs):
+        super().pack(fill=BOTH, side=TOP, **kwargs)
 
 
 class DisplayApp(tk.Tk):
@@ -141,17 +141,20 @@ class DisplayApp(tk.Tk):
         menubar.add_cascade(label='Time Series', menu=time_series_menu)
         menubar.add_cascade(label='Analysis', menu=analysis_menu)
         self.config(menu=menubar)
-
+        time_frame = ttk.Frame(self)
         self.time_selector = TimeRangeSelector(
-            self,
+            time_frame,
             on_apply=self.on_time_apply
         )
-        self.time_selector.pack()
-        self.utc_checkbtn = Checkbutton(self, command=self.toggle_utc)
-        self.utc_checkbtn.pack()
+        self.time_selector.pack(fill=Y, side=LEFT)
+        ttk.Label(time_frame, text='UTC:').pack(expand=False, fill=Y,
+                                                side=LEFT, padx=5, pady=5)
+        self.utc_checkbtn = Checkbutton(time_frame, command=self.toggle_utc)
+        self.utc_checkbtn.pack(side=LEFT, padx=5, pady=5)
 
         self.frame = ScrollableLabelFrame(self, text='')
         self.frame.pack(fill=BOTH, expand=True, side=BOTTOM)
+        time_frame.pack(fill=X, side=TOP)
 
     @property
     def active_data(self):
