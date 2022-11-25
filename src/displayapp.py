@@ -229,8 +229,8 @@ class DisplayApp(tk.Tk):
         print('DisplayApp.load_plots()')
         # Get column names to show
         figure_cols = set(self.active_data.columns)
-        ignore_cols = {'Datetime', 'Timezone (minutes)',
-                'Unix Timestamp (UTC)', 'subject_id'}
+        ignore_cols = {'Datetime', 'Datetime (UTC)', 'Timezone (minutes)',
+                       'Unix Timestamp (UTC)', 'subject_id'}
         figure_cols = figure_cols - ignore_cols
 
         subject_id = self.active_data['subject_id'].unique()[0]
