@@ -82,17 +82,17 @@ def load_data(data_path, users=None, start_time=None, end_time=None,
             day_subject['subject_id'] = int(sub_dir)
             # Add to data dataframe
             data = pd.concat([data, day_subject])
+
+    def time_shift(row):
+        dt = row['Datetime (UTC)']
+        offset = pd.DateOffset(minutes=row['Timezone (minutes)'])
+        row['Datetime'] = dt + offset
+        return row
+    data = data.apply(time_shift, axis=1)
     if start_time:
         data = data[data['Datetime'] > start_time]
     if end_time:
         data = data[data['Datetime'] < end_time]
-    if not utc_mode:
-        def time_shift(row):
-            dt = row['Datetime']
-            offset = pd.DateOffset(minutes=row['Timezone (minutes)'])
-            row['Datetime'] = dt + offset
-            return row
-        data = data.apply(time_shift, axis=1)
     if not show_acc:
         del data['Acc magnitude avg']
     if not show_eda:
