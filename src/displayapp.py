@@ -120,6 +120,7 @@ class DisplayApp(tk.Tk):
         self.resizable(True, True)
         self.configure(background='#e8f4f8')
         self.utc_mode = False
+        self.tz_offset = None
 
         menubar = Menu(self)
         data_menu = DataMenu(
@@ -175,13 +176,12 @@ class DisplayApp(tk.Tk):
         self.utc_mode = not self.utc_mode
         time_min = str_to_datetime(self.time_selector.get_min())
         time_max = str_to_datetime(self.time_selector.get_max())
-        offset = timedelta(minutes=int(self.data['Timezone (minutes)'].iloc[0]))
         if self.utc_mode:
-            time_min -= offset
-            time_max -= offset
+            time_min -= self.tz_offset
+            time_max -= self.tz_offset
         else:
-            time_min += offset
-            time_max += offset
+            time_min += self.tz_offset
+            time_max += self.tz_offset
         self.time_selector.set(str(time_min), str(time_max))
         self.on_time_apply(time_min, time_max)
         self.clear_plots()
@@ -225,6 +225,8 @@ class DisplayApp(tk.Tk):
     def on_import_submit(self, options):
         print('DisplayApp.on_import_submit()')
         self.data = load_data(self.data_path, **options)
+        self.tz_offset = timedelta(
+            minutes=int(self.data['Timezone (minutes)'].iloc[0]))
         self.utc_mode = options['utc_mode']
         self.utc_checkbtn.set(self.utc_mode)
         time_min = min(self.data[self.datetime_col])
