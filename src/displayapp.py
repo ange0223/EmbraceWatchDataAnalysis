@@ -15,6 +15,8 @@ from exportwindow import ExportWindow
 from importwindow import ImportWindow
 from describewindow import DescribeWindow
 from common import ScrollableLabelFrame
+from tkinter import filedialog
+from tkinter.filedialog import asksaveasfile
 
 
 DEFAULT_DATA_PATH = 'Dataset'
@@ -192,10 +194,22 @@ class DisplayApp(tk.Tk):
         self.active_data = None
 
     def clear_plots(self):
-        print('DisplayApp.clear()')
+        print('DisplayApp.clear_plots()')
         for plot in self.plots:
             plot.get_tk_widget().destroy()
         self.plots = []
+
+    def on_save_figure_submit(self, figure):
+        print('DisplayApp.on_save_figure_submit()')
+        save_path = asksaveasfile(mode='a', filetypes=[('PNG image', '*.png')], initialfile = 'untitled.png', defaultextension=".png")
+        if save_path:
+            figure.savefig(save_path.name)
+
+    def on_delete_submit(self, col_name):
+        print('DisplayApp.on_delete_submit()')
+        self.active_data = self.active_data.drop(col_name, axis=1)
+        self.clear_plots()
+        self.load_plots()
 
     def load_plots(self):
         print('DisplayApp.load_plots()')
@@ -224,9 +238,9 @@ class DisplayApp(tk.Tk):
                 on_aggregate=lambda x: print('on_aggregate({})'.format(x)),
                 on_describe=lambda c=col_name: self.open_describe_window(c),
                 on_query=lambda : print('on_query()'),
-                on_save_figure=lambda : print('on_save_figure()'),
+                on_save_figure=lambda : self.on_save_figure_submit(fig), #print('on_save_figure()'
                 on_draw=lambda : print('on_draw()'),
-                on_delete=lambda : print('on_delete()')
+                on_delete=lambda : self.on_delete_submit(col_name) #print('on_delete()')  
             )
             plot_widget.bind('<Button-3>', context_menu.popup)
             plot_widget.pack(fill=X, expand=True)

@@ -22,6 +22,7 @@ class ExportWindow(tk.Toplevel):
 
     def save_file(self):
         #save_prompt = asksaveasfile(initialfile = 'Untitled.txt', defaultextension=".txt",filetypes=[("All Files","*.*"),("Text Documents","*.txt")])
-        save_path = asksaveasfile(mode='a', initialfile = 'untitled.csv', defaultextension=".csv")
-        self.submit_callback.to_csv(save_path.name)
+        save_path = asksaveasfile(mode='a', filetypes=[('CSV', '*.csv')], initialfile = 'untitled.csv', defaultextension=".csv")
+        if save_path:
+            self.submit_callback.to_csv(save_path.name)
 
