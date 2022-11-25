@@ -69,16 +69,16 @@ class TimeRangeSelector(ttk.Frame):
         self.apply_callback = on_apply
         self.time_min_entry = TimeEntry(self)
         self.time_min_entry.set('')
-        self.time_min_entry.pack(side=LEFT)
+        self.time_min_entry.pack(side=LEFT, padx=5, pady=5)
         self.time_max_entry = TimeEntry(self)
         self.time_max_entry.set('')
-        self.time_max_entry.pack(side=LEFT)
+        self.time_max_entry.pack(side=LEFT, padx=5, pady=5)
         time_apply_btn = ttk.Button(
             self,
             text='Apply',
             command=self.apply
         )
-        time_apply_btn.pack(side=LEFT)
+        time_apply_btn.pack(side=LEFT, padx=5, pady=5)
 
     def apply(self):
         if not self.apply_callback:
@@ -146,7 +146,7 @@ class DisplayApp(tk.Tk):
             time_frame,
             on_apply=self.on_time_apply
         )
-        self.time_selector.pack(fill=Y, side=LEFT)
+        self.time_selector.pack(fill=Y, side=LEFT, padx=5, pady=5)
         ttk.Label(time_frame, text='UTC:').pack(expand=False, fill=Y,
                                                 side=LEFT, padx=5, pady=5)
         self.utc_checkbtn = Checkbutton(time_frame, command=self.toggle_utc)
@@ -154,7 +154,7 @@ class DisplayApp(tk.Tk):
 
         self.frame = ScrollableLabelFrame(self, text='')
         self.frame.pack(fill=BOTH, expand=True, side=BOTTOM)
-        time_frame.pack(fill=X, side=TOP)
+        time_frame.pack(fill=X, side=TOP, padx=5, pady=5)
 
     @property
     def active_data(self):
