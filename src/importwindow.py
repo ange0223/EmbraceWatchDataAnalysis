@@ -4,9 +4,7 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, Menu
 
-from common import ToplevelWindow
-
-DATE_FMT = '%Y-%m-%d %H:%M:%S'
+from common import str_to_datetime, Checkbutton, ToplevelWindow
 
 
 class CommonLabel(ttk.Label):
@@ -34,18 +32,7 @@ class CommonEntry(ttk.Entry):
                      pady=pady, **kwargs)
 
 
-class CommonCheckbutton(ttk.Checkbutton):
-    def __init__(self, parent, **kwargs):
-        self._var = tk.IntVar()
-        super().__init__(parent, variable=self._var,
-                       **kwargs)
-
-    def get(self):
-        return self._var.get()
-
-    def set(self, val):
-        self._var.set(val)
-
+class CommonCheckbutton(Checkbutton):
     def grid(self, column=1, row=0, sticky=tk.W, padx=5, pady=5, **kwargs):
         super().grid(column=column, row=row, sticky=sticky, padx=padx,
                      pady=pady, **kwargs)
@@ -176,8 +163,8 @@ class ImportWindow(ToplevelWindow):
         user_input = {
             #'users': map(int, self.users_entry.get().split(',')),
             'users': self.user_drop.get(),
-            'start_time': datetime.strptime(self.start_entry.get(), DATE_FMT),
-            'end_time': datetime.strptime(self.end_entry.get(), DATE_FMT),
+            'start_time': str_to_datetime(self.start_entry.get()),
+            'end_time': str_to_datetime(self.end_entry.get()),
             'utc_mode': self.utc_checkbtn.get(),
             'show_acc': self.acc_checkbtn.get(),
             'show_eda': self.eda_checkbtn.get(),

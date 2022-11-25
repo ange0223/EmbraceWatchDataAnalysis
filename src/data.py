@@ -1,6 +1,9 @@
 import pandas as pd
 import os
 import sys
+from tkinter import filedialog
+from tkinter.filedialog import asksaveasfile
+from tkinter.filedialog import askdirectory
 
 # NOTE: should establish a naming convention between users and subjects
 
@@ -25,9 +28,6 @@ def load_summary(csv_path):
         'Rest': 'int64',
         'On Wrist': 'int'
     })
-    # Rename 'Datetime (UTC)' to 'Datetime'
-    # Probably shouldn't, since we'll need to switch back and forth
-    df = df.rename(columns={'Datetime (UTC)': 'Datetime'})
     return df
 
 
@@ -82,17 +82,21 @@ def load_data(data_path, users=None, start_time=None, end_time=None,
             day_subject['subject_id'] = int(sub_dir)
             # Add to data dataframe
             data = pd.concat([data, day_subject])
+
+    def time_shift(row):
+        dt = row['Datetime (UTC)']
+        offset = pd.DateOffset(minutes=row['Timezone (minutes)'])
+        row['Datetime'] = dt + offset
+        return row
+    data = data.apply(time_shift, axis=1)
+    if utc_mode:
+        datetime_col = 'Datetime (UTC)'
+    else:
+        datetime_col = 'Datetime'
     if start_time:
-        data = data[data['Datetime'] > start_time]
+        data = data[data[datetime_col] > start_time]
     if end_time:
-        data = data[data['Datetime'] < end_time]
-    if not utc_mode:
-        def time_shift(row):
-            dt = row['Datetime']
-            offset = pd.DateOffset(minutes=row['Timezone (minutes)'])
-            row['Datetime'] = dt + offset
-            return row
-        data = data.apply(time_shift, axis=1)
+        data = data[data[datetime_col] < end_time]
     if not show_acc:
         del data['Acc magnitude avg']
     if not show_eda:

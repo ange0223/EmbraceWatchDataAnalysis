@@ -143,7 +143,11 @@ class DescriptionTable(ttk.Frame):
                                    width=6)
             label_cell.grid(column=0, row=row)
             self.cells.append(label_cell)
-            str_value = '{:.3f}'.format(value)
+            # Leave off decimal points if they're zero
+            if value == int(value):
+                str_value = '{}'.format(int(value))
+            else:
+                str_value = '{:.3f}'.format(value)
             value_cell = TableCell(self, text=str_value, width=max_width)
             value_cell.grid(column=1, row=row)
             self.cells.append(value_cell)
@@ -191,14 +195,28 @@ class DescriptionFrame(ttk.LabelFrame):
 
     def update(self, data, series, bins=30):
         self.plot_frame.clear()
-        #frequency_data = sub_data.groupby(pd.qcut(sub_data, bins)).size()#.value_counts()
-        plot_data = data
+        plot_data = data.copy()
         plot_data['bin'] = pd.qcut(plot_data[series], bins, duplicates='drop')
         plot_data = plot_data['bin'].value_counts()/len(plot_data['bin'])
         self.plot_frame.plot(plot_data, series)
         # TODO: Add additional stats to summary data
         self.table_frame.clear()
-        summary_data = data[series].describe()
+        #summary_data = data[series].describe()
+        summary_data = pd.Series({
+            'count': data[series].count(),
+            'mean': data[series].mean(),
+            'std': data[series].std(),
+            'min': data[series].min(),
+            '0.2%': data[series].quantile(0.002),
+            '2.5%': data[series].quantile(0.025),
+            '25%': data[series].quantile(0.25),
+            '50%': data[series].quantile(0.975),
+            '75%': data[series].quantile(0.75),
+            '99.9%': data[series].quantile(0.999),
+            'max': data[series].max(),
+            'kurt': data[series].kurt(),
+            'skew': data[series].skew()
+        })
         self.table_frame.populate(summary_data, series)
 
 
@@ -211,7 +229,7 @@ class DescribeWindow(tk.Toplevel):
         self.series = series
         self.source_frame = SourceFrame(self)
         self.source_frame.pack()
-        self.description_frame = DescriptionFrame(self, series)
+        self.description_frame = DescriptionFrame(self)
         self.description_frame.pack()
 
     def update(self, data, interval, agg_metric='mean'):

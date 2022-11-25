@@ -1,22 +1,34 @@
 import tkinter as tk
 from tkinter import ttk, Menu
 from tkinter.constants import *
+from tkinter import messagebox
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from data import load_data, get_subject_ids
+from exportwindow import open_save_dialog
 from importwindow import ImportWindow
 from describewindow import DescribeWindow
-from common import ScrollableLabelFrame
+from common import str_to_datetime, Checkbutton, ScrollableLabelFrame
+from tkinter import filedialog
+from tkinter.filedialog import asksaveasfile
 
-# TODO: instantiate DescribeWindow via context menu
 
 DEFAULT_DATA_PATH = 'Dataset'
+
+
+def save_figure(figure, init_filename='untitled.png'):
+    print('save_figure()')
+    save_path = asksaveasfile(mode='a', filetypes=[('PNG image', '*.png')],
+                              initialfile=init_filename,
+                              defaultextension=".png")
+    if save_path:
+        figure.savefig(save_path.name)
 
 
 class DataMenu(Menu):
@@ -41,7 +53,14 @@ class AnalysisMenu(Menu):
 
 class TimeEntry(ttk.Entry):
     def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+        self._var = tk.StringVar()
+        super().__init__(parent, *args, textvariable=self._var, **kwargs)
+
+    def get(self):
+        return self._var.get()
+
+    def set(self, val):
+        self._var.set(val)
 
 
 class TimeRangeSelector(ttk.Frame):
@@ -49,33 +68,40 @@ class TimeRangeSelector(ttk.Frame):
         super().__init__(*args, **kwargs)
         self.apply_callback = on_apply
         self.time_min_entry = TimeEntry(self)
-        self.time_min_entry.insert(0, '')
-        self.time_min_entry.pack(side=LEFT)
+        self.time_min_entry.set('')
+        self.time_min_entry.pack(side=LEFT, padx=5, pady=5)
         self.time_max_entry = TimeEntry(self)
-        self.time_max_entry.insert(0, '')
-        self.time_max_entry.pack(side=LEFT)
+        self.time_max_entry.set('')
+        self.time_max_entry.pack(side=LEFT, padx=5, pady=5)
         time_apply_btn = ttk.Button(
             self,
             text='Apply',
             command=self.apply
         )
-        time_apply_btn.pack(side=LEFT)
+        time_apply_btn.pack(side=LEFT, padx=5, pady=5)
 
     def apply(self):
         if not self.apply_callback:
             return
-        print(self.apply_callback)
-        self.apply_callback(self.time_min_entry.get(), self.time_max_entry.get())
+        time_min = str_to_datetime(self.time_min_entry.get())
+        time_max = str_to_datetime(self.time_max_entry.get())
+        self.apply_callback(time_min, time_max)
 
     def get(self):
         return self.time_min_entry.get(), self.time_max_entry.get()
 
-    def set(self, time_min, time_max):
-        self.time_min_entry.insert(0, str(time_min))
-        self.time_max_entry.insert(0, str(time_max))
+    def get_min(self):
+        return self.time_min_entry.get()
 
-    def pack(self):
-        super().pack(fill=BOTH, side=TOP)
+    def get_max(self):
+        return self.time_max_entry.get()
+
+    def set(self, time_min, time_max):
+        self.time_min_entry.set(time_min)
+        self.time_max_entry.set(time_max)
+
+    def pack(self, fill=BOTH, side=TOP, **kwargs):
+        super().pack(fill=BOTH, side=TOP, **kwargs)
 
 
 class DisplayApp(tk.Tk):
@@ -93,13 +119,15 @@ class DisplayApp(tk.Tk):
         self.geometry('900x600+50+50')
         self.resizable(True, True)
         self.configure(background='#e8f4f8')
+        self.utc_mode = False
+        self.tz_offset = None
 
         menubar = Menu(self)
         data_menu = DataMenu(
             menubar,
             on_import=self.open_import_window,
-            on_export=lambda : print('Data > Export pressed'),
-            on_clear=self.clear
+            on_export=self.open_export_dialog,
+            on_clear=self.clear_all
         )
         time_series_menu = TimeSeriesMenu(
             menubar,
@@ -113,15 +141,20 @@ class DisplayApp(tk.Tk):
         menubar.add_cascade(label='Time Series', menu=time_series_menu)
         menubar.add_cascade(label='Analysis', menu=analysis_menu)
         self.config(menu=menubar)
-
+        time_frame = ttk.Frame(self)
         self.time_selector = TimeRangeSelector(
-            self,
+            time_frame,
             on_apply=self.on_time_apply
         )
-        self.time_selector.pack()
+        self.time_selector.pack(fill=Y, side=LEFT, padx=5, pady=5)
+        ttk.Label(time_frame, text='UTC:').pack(expand=False, fill=Y,
+                                                side=LEFT, padx=5, pady=5)
+        self.utc_checkbtn = Checkbutton(time_frame, command=self.toggle_utc)
+        self.utc_checkbtn.pack(side=LEFT, padx=5, pady=5)
 
         self.frame = ScrollableLabelFrame(self, text='')
         self.frame.pack(fill=BOTH, expand=True, side=BOTTOM)
+        time_frame.pack(fill=X, side=TOP, padx=5, pady=5)
 
     @property
     def active_data(self):
@@ -133,17 +166,37 @@ class DisplayApp(tk.Tk):
         Need to update several different things when active data changes
         '''
         self._active_data = data
-        self.clear()
+        self.clear_plots()
         self.load_plots()
         self.update_describe_window()
+
+    @property
+    def datetime_col(self):
+        return 'Datetime (UTC)' if self.utc_mode else 'Datetime'
+
+    def toggle_utc(self):
+        print('DisplayApp.toggle_utc()')
+        self.utc_mode = not self.utc_mode
+        time_min = str_to_datetime(self.time_selector.get_min())
+        time_max = str_to_datetime(self.time_selector.get_max())
+        if self.utc_mode:
+            time_min -= self.tz_offset
+            time_max -= self.tz_offset
+        else:
+            time_min += self.tz_offset
+            time_max += self.tz_offset
+        self.time_selector.set(str(time_min), str(time_max))
+        self.on_time_apply(time_min, time_max)
+        self.clear_plots()
+        self.load_plots()
 
     def on_time_apply(self, time_min, time_max):
         print('DisplayApp.on_time_apply()')
         if self.data is None:
             return
         self.active_data = self.data[
-            (self.data['Datetime'] > time_min)
-            & (self.data['Datetime'] < time_max)
+            (self.data[self.datetime_col] > time_min)
+            & (self.data[self.datetime_col] < time_max)
         ]
 
     def update_describe_window(self):
@@ -165,28 +218,60 @@ class DisplayApp(tk.Tk):
         top.lift()
         top.mainloop()
 
+    def open_export_dialog(self):
+        print('DisplayApp.open_export_window()')
+        if self.active_data is None:
+            messagebox.showerror('CSV Error', 'Error: No data to export')
+        else:
+            open_save_dialog(self.active_data)
+
     def on_import_submit(self, options):
         print('DisplayApp.on_import_submit()')
         self.data = load_data(self.data_path, **options)
-        time_min = min(self.data['Datetime'])
-        time_max = max(self.data['Datetime'])
-        self.time_selector.set(time_min, time_max)
-        self.on_time_apply(time_min, time_max)
-        self.clear()
-        self.load_plots()
+        self.tz_offset = timedelta(
+            minutes=int(self.data['Timezone (minutes)'].iloc[0]))
+        self.utc_mode = options['utc_mode']
+        self.utc_checkbtn.set(self.utc_mode)
+        time_min = min(self.data[self.datetime_col])
+        time_max = max(self.data[self.datetime_col])
+        self.time_selector.set(str(time_min), str(time_max))
+        self.on_time_apply(time_min, time_max) # will set active_data property
+        self.load_plots() # this call not needed, because of above line
 
-    def clear(self):
-        print('DisplayApp.clear()')
+    def clear_all(self):
+        print('DisplayApp.clear_all()')
+        self.clear_data()
+        self.clear_plots()
+
+    def clear_data(self):
+        print('DisplayApp.clear_data()')
+        self.data = None
+        # Don't use active_data property, otherwise infinite recursion
+        self._active_data = None
+        if self.describe_window:
+            self.describe_window.destroy()
+            self.describe_window = None
+
+    def clear_plots(self):
+        print('DisplayApp.clear_plots()')
         for plot in self.plots:
             plot.get_tk_widget().destroy()
         self.plots = []
 
+    def on_delete_submit(self, col_name):
+        print('DisplayApp.on_delete_submit()')
+        self.active_data = self.active_data.drop(col_name, axis=1)
+        self.clear_plots()
+        self.load_plots()
+
     def load_plots(self):
         print('DisplayApp.load_plots()')
+        if self.data is None:
+            return
         # Get column names to show
         figure_cols = set(self.active_data.columns)
-        ignore_cols = {'Datetime', 'Timezone (minutes)',
-                'Unix Timestamp (UTC)', 'subject_id'}
+        ignore_cols = {'Datetime', 'Datetime (UTC)', 'Timezone (minutes)',
+                       'Unix Timestamp (UTC)', 'subject_id'}
         figure_cols = figure_cols - ignore_cols
 
         subject_id = self.active_data['subject_id'].unique()[0]
@@ -197,7 +282,7 @@ class DisplayApp(tk.Tk):
         for col_name in sorted(figure_cols):
             fig = Figure(figsize=fig_size, dpi=fig_dpi)
             ax = fig.add_subplot(111)
-            subject.plot(x='Datetime', y=col_name, ax=ax)
+            subject.plot(x=self.datetime_col, y=col_name, ax=ax)
             data_plot = FigureCanvasTkAgg(fig,
                     master=self.frame.scrollable_frame)
             self.plots.append(data_plot)
@@ -208,9 +293,9 @@ class DisplayApp(tk.Tk):
                 on_aggregate=lambda x: print('on_aggregate({})'.format(x)),
                 on_describe=lambda c=col_name: self.open_describe_window(c),
                 on_query=lambda : print('on_query()'),
-                on_save_figure=lambda : print('on_save_figure()'),
+                on_save_figure=lambda c=col_name, f=fig: save_figure(f, c),
                 on_draw=lambda : print('on_draw()'),
-                on_delete=lambda : print('on_delete()')
+                on_delete=lambda c=col_name: self.on_delete_submit(c)
             )
             plot_widget.bind('<Button-3>', context_menu.popup)
             plot_widget.pack(fill=X, expand=True)
