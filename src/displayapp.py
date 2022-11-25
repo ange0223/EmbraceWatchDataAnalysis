@@ -195,12 +195,18 @@ class DisplayApp(tk.Tk):
         self.load_plots() # this call not needed, because of above line
 
     def clear_all(self):
+        print('DisplayApp.clear_all()')
         self.clear_data()
         self.clear_plots()
 
     def clear_data(self):
+        print('DisplayApp.clear_data()')
         self.data = None
-        self.active_data = None
+        # Don't use active_data property, otherwise infinite recursion
+        self._active_data = None
+        if self.describe_window:
+            self.describe_window.destroy()
+            self.describe_window = None
 
     def clear_plots(self):
         print('DisplayApp.clear_plots()')
