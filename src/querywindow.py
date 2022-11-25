@@ -2,8 +2,6 @@ import tkinter as tk
 from tkinter import ttk, Menu
 from tkinter.constants import *
 
-from common import ToplevelWindow
-
 
 class CommonTextBox(tk.Text):
     def __init__(self, parent, width=20, height=5, *args, **kwargs):
