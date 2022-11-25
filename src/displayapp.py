@@ -100,7 +100,7 @@ class DisplayApp(tk.Tk):
             menubar,
             on_import=self.open_import_window,
             on_export=self.open_export_window,
-            on_clear=self.clear
+            on_clear=self.clear_all
         )
         time_series_menu = TimeSeriesMenu(
             menubar,
@@ -134,7 +134,7 @@ class DisplayApp(tk.Tk):
         Need to update several different things when active data changes
         '''
         self._active_data = data
-        self.clear()
+        self.clear_plots()
         self.load_plots()
         self.update_describe_window()
 
@@ -180,11 +180,18 @@ class DisplayApp(tk.Tk):
         time_min = min(self.data['Datetime'])
         time_max = max(self.data['Datetime'])
         self.time_selector.set(time_min, time_max)
-        self.on_time_apply(time_min, time_max)
-        self.clear()
-        self.load_plots()
+        self.on_time_apply(time_min, time_max) # will set active_data property
+        self.load_plots() # this call not needed, because of above line
 
-    def clear(self):
+    def clear_all(self):
+        self.clear_data()
+        self.clear_plots()
+
+    def clear_data(self):
+        self.data = None
+        self.active_data = None
+
+    def clear_plots(self):
         print('DisplayApp.clear()')
         for plot in self.plots:
             plot.get_tk_widget().destroy()
