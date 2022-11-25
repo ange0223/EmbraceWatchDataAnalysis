@@ -22,6 +22,15 @@ from tkinter.filedialog import asksaveasfile
 DEFAULT_DATA_PATH = 'Dataset'
 
 
+def save_figure(figure, init_filename='untitled.png'):
+    print('save_figure()')
+    save_path = asksaveasfile(mode='a', filetypes=[('PNG image', '*.png')],
+                              initialfile=init_filename,
+                              defaultextension=".png")
+    if save_path:
+        figure.savefig(save_path.name)
+
+
 class DataMenu(Menu):
     def __init__(self, parent, on_import=None, on_export=None, on_clear=None):
         super().__init__(parent)
@@ -199,12 +208,6 @@ class DisplayApp(tk.Tk):
             plot.get_tk_widget().destroy()
         self.plots = []
 
-    def on_save_figure_submit(self, figure):
-        print('DisplayApp.on_save_figure_submit()')
-        save_path = asksaveasfile(mode='a', filetypes=[('PNG image', '*.png')], initialfile = 'untitled.png', defaultextension=".png")
-        if save_path:
-            figure.savefig(save_path.name)
-
     def on_delete_submit(self, col_name):
         print('DisplayApp.on_delete_submit()')
         self.active_data = self.active_data.drop(col_name, axis=1)
@@ -238,7 +241,7 @@ class DisplayApp(tk.Tk):
                 on_aggregate=lambda x: print('on_aggregate({})'.format(x)),
                 on_describe=lambda c=col_name: self.open_describe_window(c),
                 on_query=lambda : print('on_query()'),
-                on_save_figure=lambda f=fig: self.on_save_figure_submit(f),
+                on_save_figure=lambda c=col_name, f=fig: save_figure(f, c),
                 on_draw=lambda : print('on_draw()'),
                 on_delete=lambda c=col_name: self.on_delete_submit(c)
             )
