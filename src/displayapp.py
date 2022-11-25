@@ -159,8 +159,8 @@ class DisplayApp(tk.Tk):
         if self.data is None:
             return
         self.active_data = self.data[
-            (self.data['Datetime'] > time_min)
-            & (self.data['Datetime'] < time_max)
+            (self.data[self.datetime_col] > time_min)
+            & (self.data[self.datetime_col] < time_max)
         ]
 
     def update_describe_window(self):
@@ -193,8 +193,8 @@ class DisplayApp(tk.Tk):
         print('DisplayApp.on_import_submit()')
         self.data = load_data(self.data_path, **options)
         self.utc_mode = options['utc_mode']
-        time_min = min(self.data['Datetime'])
-        time_max = max(self.data['Datetime'])
+        time_min = min(self.data[self.datetime_col])
+        time_max = max(self.data[self.datetime_col])
         self.time_selector.set(time_min, time_max)
         self.on_time_apply(time_min, time_max) # will set active_data property
         self.load_plots() # this call not needed, because of above line
@@ -241,7 +241,7 @@ class DisplayApp(tk.Tk):
         for col_name in sorted(figure_cols):
             fig = Figure(figsize=fig_size, dpi=fig_dpi)
             ax = fig.add_subplot(111)
-            subject.plot(x='Datetime', y=col_name, ax=ax)
+            subject.plot(x=self.datetime_col, y=col_name, ax=ax)
             data_plot = FigureCanvasTkAgg(fig,
                     master=self.frame.scrollable_frame)
             self.plots.append(data_plot)
