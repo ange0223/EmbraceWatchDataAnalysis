@@ -8,13 +8,13 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from data import load_data, get_subject_ids
 from exportwindow import open_save_dialog
 from importwindow import ImportWindow
 from describewindow import DescribeWindow
-from common import str_to_datetime, ScrollableLabelFrame
+from common import str_to_datetime, Checkbutton, ScrollableLabelFrame
 from tkinter import filedialog
 from tkinter.filedialog import asksaveasfile
 
@@ -53,7 +53,14 @@ class AnalysisMenu(Menu):
 
 class TimeEntry(ttk.Entry):
     def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+        self._var = tk.StringVar()
+        super().__init__(parent, *args, textvariable=self._var, **kwargs)
+
+    def get(self):
+        return self._var.get()
+
+    def set(self, val):
+        self._var.set(val)
 
 
 class TimeRangeSelector(ttk.Frame):
@@ -61,10 +68,10 @@ class TimeRangeSelector(ttk.Frame):
         super().__init__(*args, **kwargs)
         self.apply_callback = on_apply
         self.time_min_entry = TimeEntry(self)
-        self.time_min_entry.insert(0, '')
+        self.time_min_entry.set('')
         self.time_min_entry.pack(side=LEFT)
         self.time_max_entry = TimeEntry(self)
-        self.time_max_entry.insert(0, '')
+        self.time_max_entry.set('')
         self.time_max_entry.pack(side=LEFT)
         time_apply_btn = ttk.Button(
             self,
@@ -84,8 +91,8 @@ class TimeRangeSelector(ttk.Frame):
         return self.time_min_entry.get(), self.time_max_entry.get()
 
     def set(self, time_min, time_max):
-        self.time_min_entry.insert(0, str(time_min))
-        self.time_max_entry.insert(0, str(time_max))
+        self.time_min_entry.set(time_min)
+        self.time_max_entry.set(time_max)
 
     def pack(self):
         super().pack(fill=BOTH, side=TOP)
@@ -133,6 +140,8 @@ class DisplayApp(tk.Tk):
             on_apply=self.on_time_apply
         )
         self.time_selector.pack()
+        self.utc_checkbtn = Checkbutton(self, command=self.toggle_utc)
+        self.utc_checkbtn.pack()
 
         self.frame = ScrollableLabelFrame(self, text='')
         self.frame.pack(fill=BOTH, expand=True, side=BOTTOM)
@@ -154,6 +163,23 @@ class DisplayApp(tk.Tk):
     @property
     def datetime_col(self):
         return 'Datetime (UTC)' if self.utc_mode else 'Datetime'
+
+    def toggle_utc(self):
+        print('DisplayApp.toggle_utc()')
+        self.utc_mode = not self.utc_mode
+        time_min = str_to_datetime(self.time_selector.time_min_entry.get())
+        time_max = str_to_datetime(self.time_selector.time_max_entry.get())
+        offset = timedelta(minutes=int(self.data['Timezone (minutes)'].iloc[0]))
+        if self.utc_mode:
+            time_min -= offset
+            time_max -= offset
+        else:
+            time_min += offset
+            time_max += offset
+        self.time_selector.set(str(time_min), str(time_max))
+        self.on_time_apply(time_min, time_max)
+        self.clear_plots()
+        self.load_plots()
 
     def on_time_apply(self, time_min, time_max):
         print('DisplayApp.on_time_apply()')
@@ -194,9 +220,10 @@ class DisplayApp(tk.Tk):
         print('DisplayApp.on_import_submit()')
         self.data = load_data(self.data_path, **options)
         self.utc_mode = options['utc_mode']
+        self.utc_checkbtn.set(self.utc_mode)
         time_min = min(self.data[self.datetime_col])
         time_max = max(self.data[self.datetime_col])
-        self.time_selector.set(time_min, time_max)
+        self.time_selector.set(str(time_min), str(time_max))
         self.on_time_apply(time_min, time_max) # will set active_data property
         self.load_plots() # this call not needed, because of above line
 
