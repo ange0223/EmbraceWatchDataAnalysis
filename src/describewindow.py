@@ -195,7 +195,7 @@ class DescriptionFrame(ttk.LabelFrame):
 
     def update(self, data, series, bins=30):
         self.plot_frame.clear()
-        plot_data = data
+        plot_data = data.copy()
         plot_data['bin'] = pd.qcut(plot_data[series], bins, duplicates='drop')
         plot_data = plot_data['bin'].value_counts()/len(plot_data['bin'])
         self.plot_frame.plot(plot_data, series)
