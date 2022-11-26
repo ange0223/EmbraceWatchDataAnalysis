@@ -1,3 +1,7 @@
 venv/
 __pycache__/
 .idea/
+
+# Ignore any generated diagrams
+diagrams_*/
+diagrams_*.zip
