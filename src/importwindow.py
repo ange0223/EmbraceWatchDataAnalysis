@@ -197,5 +197,33 @@ class ImportWindow(tk.Toplevel):
 
 
 if __name__ == '__main__':
-    app = App()
+    import tkinter as tk
+
+    class App(tk.Tk):
+        def __init__(self, subject_ids, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.subject_ids = subject_ids
+            tk.Button(self, text='Import', command=self.open_import).pack()
+
+        def open_import(self):
+            subject_ids = [310, 311, 312]
+            iw = ImportWindow(subject_ids, on_submit=self.iw_callback)
+            iw.lift()
+            iw.mainloop()
+
+        def iw_callback(self, import_options):
+            # Do something, anything, with import options -- printing them
+            self.print_import_options(import_options)
+
+        @staticmethod
+        def print_import_options(import_options):
+            print('Received import options via callback from ImportWindow:')
+            # Formatting key length as max key length plus 1 (for ':')
+            key_len = max((len(key) for key in import_options)) + 1
+            for key, val in import_options.items():
+                print('  {: <{fill}} {:}'.format(key+':', val, fill=key_len))
+
+    subject_ids = [310, 311, 312]
+    app = App(subject_ids)
     app.mainloop()
+
