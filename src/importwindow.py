@@ -4,11 +4,11 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, Menu
 
-from common import Checkbutton
+import common
 from util import str_to_datetime
 
 
-class CommonLabel(ttk.Label):
+class Label(ttk.Label):
     def __init__(self, parent, font_family='Helvetica', font_size=14,
                 background='#e8f4f8', **kwargs):
         super().__init__(parent, background='#e8f4f8',
@@ -19,12 +19,12 @@ class CommonLabel(ttk.Label):
                      pady=pady, **kwargs)
 
 
-class CommonHeader(CommonLabel):
+class Header(Label):
     def __init__(self, parent, font_size=24, **kwargs):
         super().__init__(parent, font_size=font_size, **kwargs)
 
 
-class CommonEntry(ttk.Entry):
+class Entry(ttk.Entry):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
 
@@ -33,13 +33,13 @@ class CommonEntry(ttk.Entry):
                      pady=pady, **kwargs)
 
 
-class CommonCheckbutton(Checkbutton):
+class Checkbutton(common.Checkbutton):
     def grid(self, column=1, row=0, sticky=tk.W, padx=5, pady=5, **kwargs):
         super().grid(column=column, row=row, sticky=sticky, padx=padx,
                      pady=pady, **kwargs)
 
 
-class CommonDropDown(ttk.OptionMenu):
+class DropDown(ttk.OptionMenu):
     def __init__(self, parent, tkvar, default, *options):
         super().__init__(parent, tkvar, default, *options)
         self._var = tkvar
@@ -52,7 +52,7 @@ class CommonDropDown(ttk.OptionMenu):
                      pady=pady, **kwargs)
 
 
-class CommonSubmitButton(ttk.Button):
+class SubmitButton(ttk.Button):
     def __init__(self, parent, text='Submit', **kwargs):
         super().__init__(parent, text=text, **kwargs)
 
@@ -90,76 +90,76 @@ class ImportWindow(tk.Toplevel):
             command=self.destroy
         )
 
-        options_label = CommonHeader(self, text='Options')
+        options_label = Header(self, text='Options')
         options_label.grid(row=0)
 
-        users_label = CommonLabel(self, text='EmbraceWatch User ID(s):')
+        users_label = Label(self, text='EmbraceWatch User ID(s):')
         users_label.grid(row=1)
-        self.user_drop = CommonDropDown(self, tk.IntVar(), subject_ids[0], *subject_ids)
+        self.user_drop = DropDown(self, tk.IntVar(), subject_ids[0], *subject_ids)
         self.user_drop.grid(row=1)
 
-        start_label = CommonLabel(self, text='Date Start:')
+        start_label = Label(self, text='Date Start:')
         start_label.grid(row=2)
-        self.start_entry = CommonEntry(self)
+        self.start_entry = Entry(self)
         self.start_entry.insert(0, '2020-01-17 23:48:00')
         self.start_entry.grid(row=2)
 
-        end_label = CommonLabel(self, text='Date End:')
+        end_label = Label(self, text='Date End:')
         end_label.grid(row=3)
-        self.end_entry = CommonEntry(self)
+        self.end_entry = Entry(self)
         self.end_entry.insert(0, '2022-01-17 23:48:00')
         self.end_entry.grid(row=3)
 
-        utc_label = CommonLabel(self, text='UTC:')
+        utc_label = Label(self, text='UTC:')
         utc_label.grid(row=4)
-        self.utc_checkbtn = CommonCheckbutton(self)
+        self.utc_checkbtn = Checkbutton(self)
         self.utc_checkbtn.grid(row=4)
 
-        display_label = CommonHeader(self, text='Fields to Display')
+        display_label = Header(self, text='Fields to Display')
         display_label.grid(row=5)
 
-        acc_label = CommonLabel(self, text='ACC Avg Magnitude:')
+        acc_label = Label(self, text='ACC Avg Magnitude:')
         acc_label.grid(row=6)
-        self.acc_checkbtn = CommonCheckbutton(self)
+        self.acc_checkbtn = Checkbutton(self)
         self.acc_checkbtn.grid(row=6)
 
-        eda_label = CommonLabel(self, text='EDA Avg:')
+        eda_label = Label(self, text='EDA Avg:')
         eda_label.grid(row=7)
-        self.eda_checkbtn = CommonCheckbutton(self)
+        self.eda_checkbtn = Checkbutton(self)
         self.eda_checkbtn.grid(row=7)
 
-        temp_label = CommonLabel(self, text='Temperature Avg:')
+        temp_label = Label(self, text='Temperature Avg:')
         temp_label.grid(row=8)
-        self.temp_checkbtn = CommonCheckbutton(self)
+        self.temp_checkbtn = Checkbutton(self)
         self.temp_checkbtn.grid(row=8)
 
-        movement_label = CommonLabel(self, text='Movement Intensity:')
+        movement_label = Label(self, text='Movement Intensity:')
         movement_label.grid(row=9)
-        self.movement_checkbtn = CommonCheckbutton(self)
+        self.movement_checkbtn = Checkbutton(self)
         self.movement_checkbtn.grid(row=9)
 
-        step_label = CommonLabel(self, text='Steps:')
+        step_label = Label(self, text='Steps:')
         step_label.grid(row=10)
-        self.step_checkbtn = CommonCheckbutton(self)
+        self.step_checkbtn = Checkbutton(self)
         self.step_checkbtn.grid(row=10)
 
-        rest_label = CommonLabel(self, text='Rest:')
+        rest_label = Label(self, text='Rest:')
         rest_label.grid(row=11)
-        self.rest_checkbtn = CommonCheckbutton(self)
+        self.rest_checkbtn = Checkbutton(self)
         self.rest_checkbtn.grid(row=11)
 
-        wrist_label = CommonLabel(self, text='On Wrist:')
+        wrist_label = Label(self, text='On Wrist:')
         wrist_label.grid(row=12)
-        self.wrist_checkbtn = CommonCheckbutton(self)
+        self.wrist_checkbtn = Checkbutton(self)
         self.wrist_checkbtn.grid(row=12)
 
-        toggle_all_label = CommonLabel(self, text='Toggle All:')
+        toggle_all_label = Label(self, text='Toggle All:')
         toggle_all_label.grid(row=13)
-        self.toggle_all_checkbtn = CommonCheckbutton(self,
-                command=self.toggle_all_display_fields)
+        self.toggle_all_checkbtn = Checkbutton(self,
+                                               command=self.toggle_all_display_fields)
         self.toggle_all_checkbtn.grid(row=13)
 
-        submit_btn = CommonSubmitButton(self, command=self.submit)
+        submit_btn = SubmitButton(self, command=self.submit)
         submit_btn.grid(row=14)
 
     def get_options(self):
