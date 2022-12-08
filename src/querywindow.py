@@ -3,12 +3,12 @@ from tkinter import ttk, Menu
 from tkinter.constants import *
 
 
-class CommonTextBox(tk.Text):
+class TextBox(tk.Text):
     def __init__(self, parent, width=80, height=15, *args, **kwargs):
         super().__init__(parent, *args, width=width, height=height, **kwargs)
 
 
-class CommonButton(ttk.Button):
+class Button(ttk.Button):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
 
@@ -27,22 +27,22 @@ class QueryWindow(tk.Toplevel):
         entry_frame = ttk.Frame(self)
         entry_frame.pack(side=tk.TOP)
 
-        self.query_entry = CommonTextBox(entry_frame)
+        self.query_entry = TextBox(entry_frame)
         self.query_entry.pack()
         self.query_entry.insert(1.0, "SELECT `Steps count`\nFROM data;")
 
-        self.result_entry = CommonTextBox(entry_frame)
+        self.result_entry = TextBox(entry_frame)
         self.result_entry.pack()
 
         btn_frame = ttk.Frame(self)
         btn_frame.pack()
 
-        self.undo_btn = CommonButton(btn_frame, text='Undo',
-                                     command=self.undo)
+        self.undo_btn = Button(btn_frame, text='Undo',
+                               command=self.undo)
         self.undo_btn.pack(side=tk.LEFT)
 
-        self.apply_btn = CommonButton(btn_frame, text='Apply',
-                                      command=self.apply)
+        self.apply_btn = Button(btn_frame, text='Apply',
+                                command=self.apply)
         self.apply_btn.pack(side=tk.RIGHT)
 
     def apply(self):
