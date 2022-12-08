@@ -15,20 +15,10 @@ from importwindow import ImportWindow
 from describewindow import DescribeWindow
 from querywindow import QueryWindow
 from common import Checkbutton, ScrollableLabelFrame
-from util import str_to_datetime
-from tkinter.filedialog import asksaveasfile
+from util import str_to_datetime, save_figure
 
 
 DEFAULT_DATA_PATH = 'Dataset'
-
-
-def save_figure(figure, init_filename='untitled.png'):
-    print('save_figure()')
-    save_path = asksaveasfile(mode='a', filetypes=[('PNG image', '*.png')],
-                              initialfile=init_filename,
-                              defaultextension=".png")
-    if save_path:
-        figure.savefig(save_path.name)
 
 
 class DataMenu(Menu):
