@@ -19,9 +19,6 @@ import common
 from util import str_to_datetime, save_figure
 
 
-DEFAULT_DATA_PATH = 'Dataset'
-
-
 class DataMenu(Menu):
     def __init__(self, parent, on_import=None, on_export=None, on_clear=None):
         super().__init__(parent)
