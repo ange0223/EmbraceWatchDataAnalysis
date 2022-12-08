@@ -4,8 +4,16 @@ from tkinter.constants import *
 
 
 class CommonTextBox(tk.Text):
-    def __init__(self, parent, width=20, height=5, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent, width=80, height=15, *args, **kwargs):
+        super().__init__(parent, *args, width=width, height=height, **kwargs)
+
+
+class CommonButton(ttk.Button):
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+
+    def pack(self, padx=20, pady=20, **kwargs):
+        super().pack(padx=padx, pady=pady, **kwargs)
 
 
 class QueryWindow(tk.Toplevel):
@@ -13,30 +21,37 @@ class QueryWindow(tk.Toplevel):
         super().__init__()
         self.on_apply = on_apply
         self.on_undo = on_undo
-        self.title('SQL Query')
+        self.title('Query')
         self.geometry('500x600+100+100')
 
         entry_frame = ttk.Frame(self)
         entry_frame.pack(side=tk.TOP)
 
-        self.query_entry = CommonTextBox(self)
+        self.query_entry = CommonTextBox(entry_frame)
         self.query_entry.pack()
+        self.query_entry.insert(1.0, "SELECT `Steps count`\nFROM data;")
 
-        self.result_entry = CommonTextBox(self)
+        self.result_entry = CommonTextBox(entry_frame)
         self.result_entry.pack()
 
         btn_frame = ttk.Frame(self)
         btn_frame.pack()
 
-        self.undo_btn = ttk.Button(btn_frame, text='Undo', command=self.undo)
+        self.undo_btn = CommonButton(btn_frame, text='Undo',
+                                     command=self.undo)
         self.undo_btn.pack(side=tk.LEFT)
 
-        self.apply_btn = ttk.Button(btn_frame, text='Apply', command=self.apply)
+        self.apply_btn = CommonButton(btn_frame, text='Apply',
+                                      command=self.apply)
         self.apply_btn.pack(side=tk.RIGHT)
 
     def apply(self):
-        query = self.query_entry.get()
+        query = self.query_entry.get('1.0', 'end-1c')
         self.on_apply(query)
+
+    def update_result(self, string):
+        self.result_entry.delete(1.0, END)
+        self.result_entry.insert(1.0, string)
 
     def undo(self):
         self.on_undo()

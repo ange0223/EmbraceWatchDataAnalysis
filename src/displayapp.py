@@ -9,11 +9,13 @@ from matplotlib.figure import Figure
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+import pandasql as ps
 
 from data import load_data, get_subject_ids
 from exportwindow import open_save_dialog
 from importwindow import ImportWindow
 from describewindow import DescribeWindow
+from querywindow import QueryWindow
 from common import str_to_datetime, Checkbutton, ScrollableLabelFrame
 from tkinter import filedialog
 from tkinter.filedialog import asksaveasfile
@@ -112,8 +114,10 @@ class DisplayApp(tk.Tk):
         self.subject_ids = sorted(list(get_subject_ids(data_path)))
         self.data = None
         self.plots = [] # used to easily reference displayed plots
+        self._active_data_bak = None # used for undoing queries
         self._active_data = None
         self.describe_window = None
+        self.query_window = None
         self.interval = '1min'
         self.title('Data Analyzer')
         self.geometry('900x600+50+50')
@@ -264,6 +268,54 @@ class DisplayApp(tk.Tk):
         self.clear_plots()
         self.load_plots()
 
+    def open_query_window(self):
+        print('DisplayApp.open_query_window()')
+        if self.query_window:
+            self.query_window.destroy()
+        self.query_window = QueryWindow(
+            on_apply=self.on_query_apply,
+            on_undo=self.on_query_undo
+        )
+        self.query_window.update_result("")
+
+    def on_query_apply(self, query):
+        print('DisplayApp.on_query_apply()')
+        print(f'query: {query}')
+        # create a backup of active data for undo
+        self._active_data_bak = self.active_data
+        # Need to reserve datetime cols
+        #dt_utc = self.active_data['Datetime (UTC)']
+        #dt = self.active_data['Datetime']
+        def pysqldf(data, q):
+            # Enforce inclusion of UTC and local datetime columns
+            if 'SELECT' in q:
+                if 'Datetime' not in q:
+                    q = q.replace('SELECT ', 'SELECT `Datetime`, ')
+                if 'Datetime (UTC)' not in q:
+                    q = q.replace('SELECT ', 'SELECT `Datetime (UTC)`, ')
+            print(f'Final query: {q}')
+            return ps.sqldf(q, locals())
+        # For locals right
+        #pysqldf = lambda df, q, local=locals(): ps.sqldf(q, local)
+        try:
+            df = pysqldf(self.active_data, query)
+        except Exception as e:
+            err_msg = 'Query failed to execute:\n'
+            err_msg += str(e)
+            self.query_window.update_result(err_msg)
+        else:
+            self.active_data = df
+            self.query_window.update_result('Query ran successfully')
+
+    def on_query_undo(self):
+        print('DisplayApp.on_query_undo()')
+        if self._active_data_bak is not None:
+            self.active_data = self._active_data_bak
+            self.query_window.update_result('Changes reverted')
+            self._active_data_bak = None
+        else:
+            self.query_window.update_result('No changes have been made')
+
     def load_plots(self):
         print('DisplayApp.load_plots()')
         if self.data is None:
@@ -274,8 +326,9 @@ class DisplayApp(tk.Tk):
                        'Unix Timestamp (UTC)', 'subject_id'}
         figure_cols = figure_cols - ignore_cols
 
-        subject_id = self.active_data['subject_id'].unique()[0]
-        subject = self.active_data[self.active_data['subject_id'] == subject_id]
+        subject = self.active_data
+        #subject_id = self.active_data['subject_id'].unique()[0]
+        #subject = self.active_data[self.active_data['subject_id'] == subject_id]
 
         fig_size = (9, 4)
         fig_dpi = 100
@@ -292,7 +345,7 @@ class DisplayApp(tk.Tk):
                 self.frame.scrollable_frame,
                 on_aggregate=lambda x: print('on_aggregate({})'.format(x)),
                 on_describe=lambda c=col_name: self.open_describe_window(c),
-                on_query=lambda : print('on_query()'),
+                on_query=lambda : self.open_query_window(),
                 on_save_figure=lambda c=col_name, f=fig: save_figure(f, c),
                 on_draw=lambda : print('on_draw()'),
                 on_delete=lambda c=col_name: self.on_delete_submit(c)
