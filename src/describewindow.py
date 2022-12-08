@@ -96,7 +96,7 @@ class SourceFrame(ttk.LabelFrame):
     def refresh(self):
         print('SourceFrame.refresh()')
 
-    def update(self, series, interval, agg_metric):
+    def update_info(self, series, interval, agg_metric):
         self.series_lbl.config(text=series)
         self.agg_by_lbl.config(text=interval)
         self.agg_metric_lbl.config(text=agg_metric)
@@ -191,7 +191,7 @@ class DescriptionFrame(ttk.LabelFrame):
     def pack(self, expand=True, fill=Y, side=TOP):
         super().pack(expand=expand, fill=fill, side=side)
 
-    def update(self, data, series, bins=30):
+    def update_info(self, data, series, bins=30):
         self.plot_frame.clear()
         plot_data = data.copy()
         plot_data['bin'] = pd.qcut(plot_data[series], bins, duplicates='drop')
@@ -230,9 +230,9 @@ class DescribeWindow(tk.Toplevel):
         self.description_frame = DescriptionFrame(self)
         self.description_frame.pack()
 
-    def update(self, data, interval, agg_metric='mean'):
-        self.source_frame.update(self.series, interval, agg_metric)
-        self.description_frame.update(data, self.series)
+    def update_info(self, data, interval, agg_metric='mean'):
+        self.source_frame.update_info(self.series, interval, agg_metric)
+        self.description_frame.update_info(data, self.series)
 
 
 
@@ -245,7 +245,6 @@ if __name__ == '__main__':
 
     series = 'Movement intensity'
     interval = '30min'
-    agg_metric = 'mean'
     time_min = min(data['Datetime'])
     time_max = max(data['Datetime'])
     dw_data = data[['Datetime', series]]
@@ -256,5 +255,5 @@ if __name__ == '__main__':
     dw_data = dw_data.set_index('Datetime')
     dw_data = dw_data.resample(rule=interval).mean()
     dw = DescribeWindow()
-    dw.update(dw_data, series, interval, agg_metric)
+    dw.update_info(dw_data, series, interval)
     dw.mainloop()

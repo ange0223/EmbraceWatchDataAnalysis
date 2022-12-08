@@ -294,7 +294,7 @@ class DisplayApp(tk.Tk):
         if self.describe_window:
             self.describe_window.destroy()
         self.describe_window = DescribeWindow(series)
-        self.describe_window.update(self.active_data, self.interval)
+        self.describe_window.update_info(self.active_data, self.interval)
 
     def update_describe_window(self):
         print('DisplayApp.update_describe_window()')
@@ -308,7 +308,7 @@ class DisplayApp(tk.Tk):
             # briefly check query result that excludes describe window series
             # before then undoing the query and getting the series back
             return
-        self.describe_window.update(self.active_data, self.interval)
+        self.describe_window.update_info(self.active_data, self.interval)
 
     def delete_series(self, col_name):
         print(f'DisplayApp.delete_series(): {col_name}')
