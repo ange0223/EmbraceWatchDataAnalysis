@@ -216,14 +216,22 @@ class DisplayApp(tk.Tk):
         print('DisplayApp.update_describe_window()')
         if self.describe_window is None:
             return
-        self.describe_window.update(self._active_data, self.interval)
+        # Check if series used by describe window has been removed (e.g. query)
+        if self.describe_window.series not in self.active_data.columns:
+            # Kill describe window if no longer has attachment to this data
+            #self.describe_window.destroy()
+            # Choosing to instead just leave it open in case user wants to
+            # briefly check query result that excludes describe window series
+            # before then undoing the query and getting the series back
+            return
+        self.describe_window.update(self.active_data, self.interval)
 
     def open_describe_window(self, series):
         print('DisplayApp.open_describe_window()')
         if self.describe_window:
             self.describe_window.destroy()
         self.describe_window = DescribeWindow(series)
-        self.describe_window.update(self._active_data, self.interval)
+        self.describe_window.update(self.active_data, self.interval)
 
     def open_import_window(self):
         print('DisplayApp.open_import_window()')
@@ -424,7 +432,7 @@ if __name__ == '__main__':
         'users': 310,
         'start_time': datetime.strptime('2020-01-17 23:48:00', date_fmt),
         'end_time': datetime.strptime('2022-01-17 23:48:00', date_fmt),
-        'utc_mode': True,
+        'utc_mode': False,
         'show_acc': True,
         'show_eda': True,
         'show_temp': True,
