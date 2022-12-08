@@ -151,7 +151,7 @@ class DisplayApp(tk.Tk):
         time_frame = ttk.Frame(self)
         self.time_selector = TimeRangeSelector(
             time_frame,
-            on_apply=self.on_time_apply
+            on_apply=self.apply_time_range
         )
         self.time_selector.pack(fill=Y, side=LEFT, padx=5, pady=5)
         UTCLabel(time_frame).pack()
@@ -196,10 +196,10 @@ class DisplayApp(tk.Tk):
         # self.on_time_apply() sets value of self.active_data, which causes
         # plots to be redrawn and describe window to update (if open). So
         # there is no need to do those things manually here
-        self.on_time_apply(time_min, time_max)
+        self.apply_time_range(time_min, time_max)
 
-    def on_time_apply(self, time_min, time_max):
-        print('DisplayApp.on_time_apply()')
+    def apply_time_range(self, time_min, time_max):
+        print(f'DisplayApp.apply_time_range(): {time_min}, {time_max}')
         if self.data is None:
             return
         self.active_data = self.data[
@@ -224,7 +224,7 @@ class DisplayApp(tk.Tk):
         time_min = min(self.data[self.datetime_col])
         time_max = max(self.data[self.datetime_col])
         self.time_selector.set(str(time_min), str(time_max))
-        self.on_time_apply(time_min, time_max) # will set active_data property
+        self.apply_time_range(time_min, time_max) # will set active_data property
         #self.load_plots() # this call not needed, because of above line
 
     def open_export_dialog(self):
@@ -284,7 +284,7 @@ class DisplayApp(tk.Tk):
                 on_query=lambda : self.open_query_window(),
                 on_save_figure=lambda c=col_name, f=fig: save_figure(f, c),
                 on_draw=lambda : print('on_draw()'),
-                on_delete=lambda c=col_name: self.on_delete_submit(c)
+                on_delete=lambda c=col_name: self.delete_series(c)
             )
             plot_widget.bind('<Button-3>', context_menu.popup)
             plot_widget.pack(fill=X, expand=True)
@@ -310,8 +310,8 @@ class DisplayApp(tk.Tk):
             return
         self.describe_window.update(self.active_data, self.interval)
 
-    def on_delete_submit(self, col_name):
-        print('DisplayApp.on_delete_submit()')
+    def delete_series(self, col_name):
+        print(f'DisplayApp.delete_series(): {col_name}')
         self.active_data = self.active_data.drop(col_name, axis=1)
         self.clear_plots()
         self.load_plots()
@@ -321,19 +321,15 @@ class DisplayApp(tk.Tk):
         if self.query_window:
             self.query_window.destroy()
         self.query_window = QueryWindow(
-            on_apply=self.on_query_apply,
-            on_undo=self.on_query_undo
+            on_apply=self.apply_query,
+            on_undo=self.undo_query
         )
         self.query_window.update_result("")
 
-    def on_query_apply(self, query):
-        print('DisplayApp.on_query_apply()')
-        print(f'query: {query}')
+    def apply_query(self, query):
+        print(f'DisplayApp.apply_query():', query.replace("\n", " "))
         # create a backup of active data for undo
         self._active_data_bak = self.active_data
-        # Need to reserve datetime cols
-        #dt_utc = self.active_data['Datetime (UTC)']
-        #dt = self.active_data['Datetime']
         def pysqldf(data, q):
             # Enforce inclusion of UTC and local datetime columns
             if 'SELECT' in q:
@@ -341,22 +337,21 @@ class DisplayApp(tk.Tk):
                     q = q.replace('SELECT ', 'SELECT `Datetime`, ')
                 if 'Datetime (UTC)' not in q:
                     q = q.replace('SELECT ', 'SELECT `Datetime (UTC)`, ')
-            print(f'Final query: {q}')
             return ps.sqldf(q, locals())
-        # For locals right
-        #pysqldf = lambda df, q, local=locals(): ps.sqldf(q, local)
         try:
             df = pysqldf(self.active_data, query)
         except Exception as e:
-            err_msg = 'Query failed to execute:\n'
-            err_msg += str(e)
-            self.query_window.update_result(err_msg)
+            result = f'Query failed to execute:\n{str(e)}'
         else:
             self.active_data = df
-            self.query_window.update_result('Query ran successfully')
+            result = 'Query ran successfully'
+        finally:
+            self.query_window.update_result(result)
+            # Lift query window to front
+            self.query_window.wm_transient(self)
 
-    def on_query_undo(self):
-        print('DisplayApp.on_query_undo()')
+    def undo_query(self):
+        print('DisplayApp.undo_query()')
         if self._active_data_bak is not None:
             self.active_data = self._active_data_bak
             self.query_window.update_result('Changes reverted')
@@ -416,7 +411,6 @@ class SeriesContextMenu(tk.Menu):
             self.tk_popup(event.x_root, event.y_root)
         finally:
             self.grab_release()
-
 
 
 if __name__ == '__main__':
