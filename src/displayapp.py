@@ -212,39 +212,11 @@ class DisplayApp(tk.Tk):
             & (self.data[self.datetime_col] < time_max)
         ]
 
-    def update_describe_window(self):
-        print('DisplayApp.update_describe_window()')
-        if self.describe_window is None:
-            return
-        # Check if series used by describe window has been removed (e.g. query)
-        if self.describe_window.series not in self.active_data.columns:
-            # Kill describe window if no longer has attachment to this data
-            #self.describe_window.destroy()
-            # Choosing to instead just leave it open in case user wants to
-            # briefly check query result that excludes describe window series
-            # before then undoing the query and getting the series back
-            return
-        self.describe_window.update(self.active_data, self.interval)
-
-    def open_describe_window(self, series):
-        print('DisplayApp.open_describe_window()')
-        if self.describe_window:
-            self.describe_window.destroy()
-        self.describe_window = DescribeWindow(series)
-        self.describe_window.update(self.active_data, self.interval)
-
     def open_import_window(self):
         print('DisplayApp.open_import_window()')
         top = ImportWindow(on_submit=self.on_import_submit)
         top.lift()
         top.mainloop()
-
-    def open_export_dialog(self):
-        print('DisplayApp.open_export_window()')
-        if self.active_data is None:
-            messagebox.showerror('CSV Error', 'Error: No data to export')
-        else:
-            open_save_dialog(self.active_data)
 
     def on_import_submit(self, data, options):
         print('DisplayApp.on_import_submit()')
@@ -259,6 +231,13 @@ class DisplayApp(tk.Tk):
         self.time_selector.set(str(time_min), str(time_max))
         self.on_time_apply(time_min, time_max) # will set active_data property
         #self.load_plots() # this call not needed, because of above line
+
+    def open_export_dialog(self):
+        print('DisplayApp.open_export_window()')
+        if self.active_data is None:
+            messagebox.showerror('CSV Error', 'Error: No data to export')
+        else:
+            open_save_dialog(self.active_data)
 
     def clear_all(self):
         print('DisplayApp.clear_all()')
@@ -279,6 +258,62 @@ class DisplayApp(tk.Tk):
         for plot in self.plots:
             plot.get_tk_widget().destroy()
         self.plots = []
+
+    def load_plots(self):
+        print('DisplayApp.load_plots()')
+        if self.data is None:
+            return
+        # Get column names to show
+        figure_cols = set(self.active_data.columns)
+        ignore_cols = {'Datetime', 'Datetime (UTC)', 'Timezone (minutes)',
+                       'Unix Timestamp (UTC)', 'subject_id'}
+        figure_cols = figure_cols - ignore_cols
+        subject = self.active_data
+        #subject_id = self.active_data['subject_id'].unique()[0]
+        #subject = self.active_data[self.active_data['subject_id'] == subject_id]
+        fig_size = (9, 4)
+        fig_dpi = 100
+        for col_name in sorted(figure_cols):
+            fig = Figure(figsize=fig_size, dpi=fig_dpi)
+            ax = fig.add_subplot(111)
+            subject.plot(x=self.datetime_col, y=col_name, ax=ax)
+            data_plot = FigureCanvasTkAgg(fig,
+                    master=self.frame.scrollable_frame)
+            self.plots.append(data_plot)
+            data_plot.draw()
+            plot_widget = data_plot.get_tk_widget()
+            context_menu = SeriesContextMenu(
+                self.frame.scrollable_frame,
+                on_aggregate=self.aggregate,
+                on_describe=lambda c=col_name: self.open_describe_window(c),
+                on_query=lambda : self.open_query_window(),
+                on_save_figure=lambda c=col_name, f=fig: save_figure(f, c),
+                on_draw=lambda : print('on_draw()'),
+                on_delete=lambda c=col_name: self.on_delete_submit(c)
+            )
+            plot_widget.bind('<Button-3>', context_menu.popup)
+            plot_widget.pack(fill=X, expand=True)
+
+    def open_describe_window(self, series):
+        print('DisplayApp.open_describe_window()')
+        if self.describe_window:
+            self.describe_window.destroy()
+        self.describe_window = DescribeWindow(series)
+        self.describe_window.update(self.active_data, self.interval)
+
+    def update_describe_window(self):
+        print('DisplayApp.update_describe_window()')
+        if self.describe_window is None:
+            return
+        # Check if series used by describe window has been removed (e.g. query)
+        if self.describe_window.series not in self.active_data.columns:
+            # Kill describe window if no longer has attachment to this data
+            # self.describe_window.destroy()
+            # Choosing to instead just leave it open in case user wants to
+            # briefly check query result that excludes describe window series
+            # before then undoing the query and getting the series back
+            return
+        self.describe_window.update(self.active_data, self.interval)
 
     def on_delete_submit(self, col_name):
         print('DisplayApp.on_delete_submit()')
@@ -334,42 +369,8 @@ class DisplayApp(tk.Tk):
         else:
             self.query_window.update_result('No changes have been made')
 
-    def load_plots(self):
-        print('DisplayApp.load_plots()')
-        if self.data is None:
-            return
-        # Get column names to show
-        figure_cols = set(self.active_data.columns)
-        ignore_cols = {'Datetime', 'Datetime (UTC)', 'Timezone (minutes)',
-                       'Unix Timestamp (UTC)', 'subject_id'}
-        figure_cols = figure_cols - ignore_cols
-
-        subject = self.active_data
-        #subject_id = self.active_data['subject_id'].unique()[0]
-        #subject = self.active_data[self.active_data['subject_id'] == subject_id]
-
-        fig_size = (9, 4)
-        fig_dpi = 100
-        for col_name in sorted(figure_cols):
-            fig = Figure(figsize=fig_size, dpi=fig_dpi)
-            ax = fig.add_subplot(111)
-            subject.plot(x=self.datetime_col, y=col_name, ax=ax)
-            data_plot = FigureCanvasTkAgg(fig,
-                    master=self.frame.scrollable_frame)
-            self.plots.append(data_plot)
-            data_plot.draw()
-            plot_widget = data_plot.get_tk_widget()
-            context_menu = SeriesContextMenu(
-                self.frame.scrollable_frame,
-                on_aggregate=lambda x: print('on_aggregate({})'.format(x)),
-                on_describe=lambda c=col_name: self.open_describe_window(c),
-                on_query=lambda : self.open_query_window(),
-                on_save_figure=lambda c=col_name, f=fig: save_figure(f, c),
-                on_draw=lambda : print('on_draw()'),
-                on_delete=lambda c=col_name: self.on_delete_submit(c)
-            )
-            plot_widget.bind('<Button-3>', context_menu.popup)
-            plot_widget.pack(fill=X, expand=True)
+    def aggregate(self, interval):
+        print(f'DisplayApp.aggregate(): {interval}')
 
 
 class SeriesContextMenu(tk.Menu):
