@@ -416,21 +416,25 @@ class SeriesContextMenu(tk.Menu):
 
 
 if __name__ == '__main__':
+    from data import load_data
+    import os
+    data_path = os.path.join(os.getcwd(), 'Dataset')
     date_fmt = '%Y-%m-%d %H:%M:%S'
     options = {
-        'users': [310, 311],
+        'users': 310,
         'start_time': datetime.strptime('2020-01-17 23:48:00', date_fmt),
         'end_time': datetime.strptime('2022-01-17 23:48:00', date_fmt),
-        'utc_mode': 1,
-        'show_acc': 1,
-        'show_eda': 1,
-        'show_movement': 1,
-        'show_step': 1,
-        'show_wrist': 1
+        'utc_mode': True,
+        'show_acc': True,
+        'show_eda': True,
+        'show_temp': True,
+        'show_movement': True,
+        'show_step': True,
+        'show_rest': True,
+        'show_wrist': True
     }
-    app = DisplayApp(options)
-    print('\napp.data.info():')
-    print(app.data.info())
-    print('\napp.data.iloc[0]:')
-    print(app.data.iloc[0])
+    data = load_data(data_path, **options)
+    app = DisplayApp()
+    # Manually call import submit callback to pass data
+    app.on_import_submit(data, options)
     app.mainloop()
