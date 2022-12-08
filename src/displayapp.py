@@ -6,8 +6,6 @@ import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
 import pandasql as ps
 
@@ -17,7 +15,6 @@ from importwindow import ImportWindow
 from describewindow import DescribeWindow
 from querywindow import QueryWindow
 from common import str_to_datetime, Checkbutton, ScrollableLabelFrame
-from tkinter import filedialog
 from tkinter.filedialog import asksaveasfile
 
 
