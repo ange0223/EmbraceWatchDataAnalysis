@@ -9,12 +9,10 @@ from matplotlib.figure import Figure
 from datetime import datetime, timedelta
 import pandasql as ps
 
-from data import load_data, get_subject_ids
 from exportwindow import open_save_dialog
 from importwindow import ImportWindow
 from describewindow import DescribeWindow
 from querywindow import QueryWindow
-#from common import Checkbutton, ScrollableLabelFrame
 import common
 from util import str_to_datetime, save_figure
 
