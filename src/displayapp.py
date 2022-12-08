@@ -115,11 +115,11 @@ class UTCLabel(ttk.Label):
 
 
 class DisplayApp(tk.Tk):
-    def __init__(self, data_path=DEFAULT_DATA_PATH):
+    def __init__(self):
         super().__init__()
         # Use provided data_path and data options to load data
-        self.data_path = data_path
-        self.subject_ids = sorted(list(get_subject_ids(data_path)))
+        #self.data_path = data_path
+        #self.subject_ids = sorted(list(get_subject_ids(data_path)))
         self.data = None # Fully loaded data
         self.plots = [] # used to easily reference displayed plots
         self._active_data_bak = None # used for undoing queries
@@ -159,7 +159,7 @@ class DisplayApp(tk.Tk):
             on_apply=self.on_time_apply
         )
         self.time_selector.pack(fill=Y, side=LEFT, padx=5, pady=5)
-        UTCLabel().pack()
+        UTCLabel(time_frame).pack()
 
         self.utc_checkbtn = Checkbutton(time_frame, command=self.toggle_utc)
         self.utc_checkbtn.pack()
@@ -226,7 +226,7 @@ class DisplayApp(tk.Tk):
 
     def open_import_window(self):
         print('DisplayApp.open_import_window()')
-        top = ImportWindow(self.subject_ids, on_submit=self.on_import_submit)
+        top = ImportWindow(on_submit=self.on_import_submit)
         top.lift()
         top.mainloop()
 
@@ -237,9 +237,10 @@ class DisplayApp(tk.Tk):
         else:
             open_save_dialog(self.active_data)
 
-    def on_import_submit(self, options):
+    def on_import_submit(self, data, options):
         print('DisplayApp.on_import_submit()')
-        self.data = load_data(self.data_path, **options)
+        #self.data = load_data(self.data_path, **options)
+        self.data = data
         self.tz_offset = timedelta(
             minutes=int(self.data['Timezone (minutes)'].iloc[0]))
         self.utc_mode = options['utc_mode']
