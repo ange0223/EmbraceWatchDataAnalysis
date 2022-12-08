@@ -2,11 +2,8 @@ from datetime import datetime
 from tkinter.filedialog import asksaveasfile
 
 
-DATE_FMT = '%Y-%m-%d %H:%M:%S'
-
-
-def str_to_datetime(string):
-    return datetime.strptime(string, DATE_FMT)
+def str_to_datetime(string, date_fmt='%Y-%m-%d %H:%M:%S'):
+    return datetime.strptime(string, date_fmt)
 
 
 def save_figure(figure, init_filename='untitled.png'):
