@@ -14,7 +14,8 @@ from exportwindow import open_save_dialog
 from importwindow import ImportWindow
 from describewindow import DescribeWindow
 from querywindow import QueryWindow
-from common import Checkbutton, ScrollableLabelFrame
+#from common import Checkbutton, ScrollableLabelFrame
+import common
 from util import str_to_datetime, save_figure
 
 
@@ -94,6 +95,25 @@ class TimeRangeSelector(ttk.Frame):
         super().pack(fill=BOTH, side=TOP, **kwargs)
 
 
+class Checkbutton(common.Checkbutton):
+    def pack(self, side=LEFT, ipadx=5, ipady=5):
+        super().pack(side=side, ipadx=ipadx, ipady=ipady)
+
+
+class ScrollableLabelFrame(common.ScrollableLabelFrame):
+    def pack(self, fill=BOTH, expand=True, side=BOTTOM):
+        super().pack(expand=expand, fill=fill, side=side)
+
+
+class UTCLabel(ttk.Label):
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, text='UTC: ', **kwargs)
+
+    def pack(self, expand=False, fill=Y, side=LEFT, ipadx=5, ipady=5):
+        super().pack(expand=expand, fill=fill, side=side, ipadx=ipadx,
+                     ipady=ipady)
+
+
 class DisplayApp(tk.Tk):
     def __init__(self, data_path=DEFAULT_DATA_PATH):
         super().__init__()
@@ -139,13 +159,13 @@ class DisplayApp(tk.Tk):
             on_apply=self.on_time_apply
         )
         self.time_selector.pack(fill=Y, side=LEFT, padx=5, pady=5)
-        ttk.Label(time_frame, text='UTC:').pack(expand=False, fill=Y,
-                                                side=LEFT, padx=5, pady=5)
+        UTCLabel().pack()
+
         self.utc_checkbtn = Checkbutton(time_frame, command=self.toggle_utc)
-        self.utc_checkbtn.pack(side=LEFT, padx=5, pady=5)
+        self.utc_checkbtn.pack()
 
         self.frame = ScrollableLabelFrame(self, text='')
-        self.frame.pack(fill=BOTH, expand=True, side=BOTTOM)
+        self.frame.pack()
         time_frame.pack(fill=X, side=TOP, padx=5, pady=5)
 
     @property
