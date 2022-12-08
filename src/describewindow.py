@@ -1,16 +1,16 @@
-'''
+"""
 describewindow.py
 
 Pandas offset aliases: https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
-'''
+"""
 import tkinter as tk
 from tkinter import ttk, Menu
 from tkinter.constants import *
 import matplotlib
-matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import pandas as pd
+matplotlib.use('TkAgg')
 
 
 class Label(ttk.Label):
@@ -74,7 +74,7 @@ class SourceFrame(ttk.LabelFrame):
         top_frame.pack(expand=False, fill=X, side=TOP)
         bottom_frame = ttk.Frame(self)
         NameLabel(bottom_frame, text='Data: ').pack()
-        # TODO - configure different options for data dropdown
+        # NOTE - configure different options for data dropdown
         self.data_drop = DropDown(
             bottom_frame,
             tk.StringVar(),
@@ -83,7 +83,7 @@ class SourceFrame(ttk.LabelFrame):
         )
         self.data_drop.pack()
         NameLabel(bottom_frame, text='Groupby: ').pack()
-        # TODO - configure different options for groupby dropdown
+        # NOTE - configure different options for groupby dropdown
         self.groupby_drop = DropDown(
             bottom_frame,
             tk.StringVar(),
@@ -192,14 +192,11 @@ class DescriptionFrame(ttk.LabelFrame):
         super().pack(expand=expand, fill=fill, side=side)
 
     def update_info(self, data, series, bins=30):
-        self.plot_frame.clear()
         plot_data = data.copy()
+        # NOTE - Allow for user-specified bin size
         plot_data['bin'] = pd.qcut(plot_data[series], bins, duplicates='drop')
         plot_data = plot_data['bin'].value_counts()/len(plot_data['bin'])
-        self.plot_frame.plot(plot_data, series)
-        # TODO: Add additional stats to summary data
-        self.table_frame.clear()
-        #summary_data = data[series].describe()
+        # NOTE - Add additional stats to summary data
         summary_data = pd.Series({
             'count': data[series].count(),
             'mean': data[series].mean(),
@@ -215,8 +212,10 @@ class DescriptionFrame(ttk.LabelFrame):
             'kurt': data[series].kurt(),
             'skew': data[series].skew()
         })
+        self.plot_frame.clear()
+        self.table_frame.clear()
+        self.plot_frame.plot(plot_data, series)
         self.table_frame.populate(summary_data, series)
-
 
 
 class DescribeWindow(tk.Toplevel):
@@ -233,7 +232,6 @@ class DescribeWindow(tk.Toplevel):
     def update_info(self, data, interval, agg_metric='mean'):
         self.source_frame.update_info(self.series, interval, agg_metric)
         self.description_frame.update_info(data, self.series)
-
 
 
 if __name__ == '__main__':
