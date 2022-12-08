@@ -14,7 +14,7 @@ from importwindow import ImportWindow
 from describewindow import DescribeWindow
 from querywindow import QueryWindow
 import common
-from util import str_to_datetime, save_figure
+from util import str_to_datetime, valid_agg_intervals, save_figure
 
 
 class DataMenu(Menu):
@@ -193,7 +193,7 @@ class DisplayApp(tk.Tk):
             time_min += self.tz_offset
             time_max += self.tz_offset
         self.time_selector.set(str(time_min), str(time_max))
-        # self.on_time_apply() sets value of self.active_data, which causes
+        # self.apply_time_range() sets value of self.active_data, which causes
         # plots to be redrawn and describe window to update (if open). So
         # there is no need to do those things manually here
         self.apply_time_range(time_min, time_max)
@@ -217,6 +217,7 @@ class DisplayApp(tk.Tk):
         print('DisplayApp.on_import_submit()')
         #self.data = load_data(self.data_path, **options)
         self.data = data
+        self.active_data = data.copy()
         self.tz_offset = timedelta(
             minutes=int(self.data['Timezone (minutes)'].iloc[0]))
         self.utc_mode = options['utc_mode']
@@ -313,8 +314,6 @@ class DisplayApp(tk.Tk):
     def delete_series(self, col_name):
         print(f'DisplayApp.delete_series(): {col_name}')
         self.active_data = self.active_data.drop(col_name, axis=1)
-        self.clear_plots()
-        self.load_plots()
 
     def open_query_window(self):
         print('DisplayApp.open_query_window()')
@@ -368,8 +367,7 @@ class SeriesContextMenu(tk.Menu):
                  on_query=None, on_save_figure=None, on_draw=None,
                  on_delete=None, tearoff=0, **kwargs):
         super().__init__(parent, tearoff=tearoff, **kwargs)
-        intervals = ('1ms', '5ms', '50ms', '500ms', '1S', '1min', '30min', '1H',
-                     '3H', '6H', 'D', 'W')
+        intervals = valid_agg_intervals()
         agg_menu = tk.Menu(self)
         for interval in intervals:
             # Must set interval=interval at lambda definition time to overcome

@@ -6,6 +6,11 @@ def str_to_datetime(string, date_fmt='%Y-%m-%d %H:%M:%S'):
     return datetime.strptime(string, date_fmt)
 
 
+def valid_agg_intervals():
+    return ('1ms', '5ms', '50ms', '500ms', '1S', '1min', '30min', '1H',
+            '3H', '6H', 'D', 'W')
+
+
 def save_figure(figure, init_filename='untitled.png'):
     save_path = asksaveasfile(
         mode='a',
