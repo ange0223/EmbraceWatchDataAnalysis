@@ -198,9 +198,10 @@ class DisplayApp(tk.Tk):
             time_min += self.tz_offset
             time_max += self.tz_offset
         self.time_selector.set(str(time_min), str(time_max))
+        # self.on_time_apply() sets value of self.active_data, which causes
+        # plots to be redrawn and describe window to update (if open). So
+        # there is no need to do those things manually here
         self.on_time_apply(time_min, time_max)
-        self.clear_plots()
-        self.load_plots()
 
     def on_time_apply(self, time_min, time_max):
         print('DisplayApp.on_time_apply()')
