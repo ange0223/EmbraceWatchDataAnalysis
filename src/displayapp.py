@@ -14,7 +14,8 @@ from exportwindow import open_save_dialog
 from importwindow import ImportWindow
 from describewindow import DescribeWindow
 from querywindow import QueryWindow
-from common import str_to_datetime, Checkbutton, ScrollableLabelFrame
+from common import Checkbutton, ScrollableLabelFrame
+from util import str_to_datetime
 from tkinter.filedialog import asksaveasfile
 
 

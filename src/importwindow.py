@@ -4,7 +4,8 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, Menu
 
-from common import str_to_datetime, Checkbutton
+from common import Checkbutton
+from util import str_to_datetime
 
 
 class CommonLabel(ttk.Label):

@@ -1,13 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-from datetime import datetime
-
-
-DATE_FMT = '%Y-%m-%d %H:%M:%S'
-
-
-def str_to_datetime(string):
-    return datetime.strptime(string, DATE_FMT)
 
 
 class ScrollableLabelFrame(ttk.LabelFrame):
