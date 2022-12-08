@@ -100,10 +100,10 @@ class DisplayApp(tk.Tk):
         # Use provided data_path and data options to load data
         self.data_path = data_path
         self.subject_ids = sorted(list(get_subject_ids(data_path)))
-        self.data = None
+        self.data = None # Fully loaded data
         self.plots = [] # used to easily reference displayed plots
         self._active_data_bak = None # used for undoing queries
-        self._active_data = None
+        self._active_data = None # Subset of data which is plotted and described
         self.describe_window = None
         self.query_window = None
         self.interval = '1min'
