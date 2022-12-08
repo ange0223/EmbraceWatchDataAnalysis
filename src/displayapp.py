@@ -240,7 +240,7 @@ class DisplayApp(tk.Tk):
         time_max = max(self.data[self.datetime_col])
         self.time_selector.set(str(time_min), str(time_max))
         self.on_time_apply(time_min, time_max) # will set active_data property
-        self.load_plots() # this call not needed, because of above line
+        #self.load_plots() # this call not needed, because of above line
 
     def clear_all(self):
         print('DisplayApp.clear_all()')
