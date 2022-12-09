@@ -6,6 +6,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+import matplotlib.dates as mdates
 from datetime import datetime, timedelta
 import pandas as pd
 import pandasql as ps
@@ -126,7 +127,7 @@ class DisplayApp(tk.Tk):
         self.data = None # Fully loaded data
         self.plots = [] # used to easily reference displayed plots
         self.figure_cols = [] # used to track figure order
-        self.figure_styles = [] # used to track figure kind (draw style)
+        self.figure_kinds = [] # used to track figure kind (draw style)
         self.describe_window = None
         self.query_window = None
         self.title('Data Analyzer')
@@ -135,14 +136,14 @@ class DisplayApp(tk.Tk):
         self.configure(background='#e8f4f8')
         self.utc_mode = False
         self.tz_offset = None
+        self.default_interval = '1min'
         # These members have a direct effect on the value of active_data.
         # Every time one of their values changes self.update_active_data() will
         # be called, which will apply their values to active_data.
         self._active_datetime_range = None
         self._active_query = None
-        self._active_agg_interval = None
+        self._active_agg_interval = self.default_interval # default for data
         self._active_deleted_cols = None
-        self.default_interval = '1min'
         # Derived subset of self.data (derived via above members)
         self._active_data = None
 
@@ -420,23 +421,27 @@ class DisplayApp(tk.Tk):
         if self.active_data is None:
             return
         # Get column names to show
-        if not len(self.figure_cols) or not len(self.figure_styles):
+        if not len(self.figure_cols) or not len(self.figure_kinds):
             ignore_cols = {'Datetime', 'Datetime (UTC)', 'Timezone (minutes)',
                            'Unix Timestamp (UTC)', 'subject_id'}
             figure_cols = set(self.active_data.columns) - ignore_cols
             self.figure_cols = sorted(list(figure_cols))
-            self.figure_styles = ['line']*len(self.figure_cols)
+            self.figure_kinds = ['line'] * len(self.figure_cols)
         fig_size = (9, 4)
         fig_dpi = 100
-        for col_name, draw_style in zip(self.figure_cols, self.figure_styles):
+        for col_name, draw_style in zip(self.figure_cols, self.figure_kinds):
             fig = Figure(figsize=fig_size, dpi=fig_dpi)
             ax = fig.add_subplot(111)
             # Using index as x-axis
             if draw_style == 'scatter':
-                self.active_data.reset_index().plot.scatter(x=self.datetime_col,
-                                                            y=col_name, ax=ax)
+                self.active_data.plot(x=self.active_data.index, y=col_name,
+                                      ax=ax, kind='scatter', x_compat=True)
             else:
-                self.active_data.plot(y=col_name, ax=ax, kind=draw_style)
+                self.active_data.plot(y=col_name, ax=ax, kind=draw_style,
+                                      x_compat=True)
+            # Limit the number of x-axis ticks to days
+            locator = mdates.DayLocator()
+            ax.xaxis.set_major_locator(locator)
             data_plot = FigureCanvasTkAgg(fig,
                     master=self.frame.scrollable_frame)
             self.plots.append(data_plot)
@@ -460,11 +465,12 @@ class DisplayApp(tk.Tk):
         if col_name not in self.figure_cols:
             print(f'No figure with column name "{col_name}"')
         index = self.figure_cols.index(col_name)
-        self.figure_styles[index] = draw_style
+        self.figure_kinds[index] = draw_style
+        self.update_active_data()
         # Directly clear and load plots instead of calling update_active_date()
         # because the data wasn't altered for this change
-        self.clear_plots()
-        self.load_plots()
+        #self.clear_plots()
+        #self.load_plots()
 
     def move_figure_up(self, col_name):
         if col_name not in self.figure_cols:
