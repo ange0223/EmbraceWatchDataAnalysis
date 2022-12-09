@@ -7,6 +7,7 @@ matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import pandas as pd
 import pandasql as ps
@@ -429,19 +430,25 @@ class DisplayApp(tk.Tk):
             self.figure_kinds = ['line'] * len(self.figure_cols)
         fig_size = (9, 4)
         fig_dpi = 100
-        for col_name, draw_style in zip(self.figure_cols, self.figure_kinds):
+        for col_name, kind in zip(self.figure_cols, self.figure_kinds):
             fig = Figure(figsize=fig_size, dpi=fig_dpi)
             ax = fig.add_subplot(111)
             # Using index as x-axis
-            if draw_style == 'scatter':
-                self.active_data.plot(x=self.active_data.index, y=col_name,
-                                      ax=ax, kind='scatter', x_compat=True)
+            if kind == 'scatter':
+                self.active_data.reset_index().plot.scatter(
+                    x=self.datetime_col,
+                    y=col_name,
+                    ax=ax)
+            elif kind == 'bar':
+                self.active_data.reset_index().plot.bar(
+                    x=self.datetime_col,
+                    y=col_name,
+                    ax=ax
+                )
+            elif kind == 'hbar':
+                pass
             else:
-                self.active_data.plot(y=col_name, ax=ax, kind=draw_style,
-                                      x_compat=True)
-            # Limit the number of x-axis ticks to days
-            locator = mdates.DayLocator()
-            ax.xaxis.set_major_locator(locator)
+                self.active_data.plot(y=col_name, ax=ax, kind=kind)
             data_plot = FigureCanvasTkAgg(fig,
                     master=self.frame.scrollable_frame)
             self.plots.append(data_plot)
