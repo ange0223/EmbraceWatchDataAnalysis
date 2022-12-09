@@ -125,6 +125,7 @@ class DisplayApp(tk.Tk):
         #self.subject_ids = sorted(list(get_subject_ids(data_path)))
         self.data = None # Fully loaded data
         self.plots = [] # used to easily reference displayed plots
+        self.figure_cols = [] # used to track figure order
         self.describe_window = None
         self.query_window = None
         self.title('Data Analyzer')
@@ -196,6 +197,8 @@ class DisplayApp(tk.Tk):
         # Setting active_datetime_range to None does not trigger a call to
         #  update_active_data
         self.active_datetime_range = None
+        # New query resets order of figure_cols
+        self.figure_cols = []
         self.update_active_data()
         if self.query_window:
             # If query existed and was just set to None (undo)
@@ -416,13 +419,14 @@ class DisplayApp(tk.Tk):
         if self.active_data is None:
             return
         # Get column names to show
-        figure_cols = set(self.active_data.columns)
-        ignore_cols = {'Datetime', 'Datetime (UTC)', 'Timezone (minutes)',
-                       'Unix Timestamp (UTC)', 'subject_id'}
-        figure_cols = figure_cols - ignore_cols
+        if len(self.figure_cols) == 0:
+            ignore_cols = {'Datetime', 'Datetime (UTC)', 'Timezone (minutes)',
+                           'Unix Timestamp (UTC)', 'subject_id'}
+            figure_cols = set(self.active_data.columns) - ignore_cols
+            self.figure_cols = sorted(list(figure_cols))
         fig_size = (9, 4)
         fig_dpi = 100
-        for col_name in sorted(figure_cols):
+        for col_name in self.figure_cols:
             fig = Figure(figsize=fig_size, dpi=fig_dpi)
             ax = fig.add_subplot(111)
             # Using index as x-axis
@@ -439,10 +443,34 @@ class DisplayApp(tk.Tk):
                 on_query=lambda : self.open_query_window(),
                 on_save_figure=lambda c=col_name, f=fig: save_figure(f, c),
                 on_draw=lambda : print('on_draw()'),
-                on_delete=lambda c=col_name: self.delete_series(c)
+                on_delete=lambda c=col_name: self.delete_series(c),
+                on_move_up=lambda c=col_name: self.move_figure_up(c),
+                on_move_down=lambda c=col_name: self.move_figure_down(c)
             )
             plot_widget.bind('<Button-3>', context_menu.popup)
             plot_widget.pack(fill=X, expand=True)
+
+    def move_figure_up(self, col_name):
+        if col_name not in self.figure_cols:
+            print(f'DisplayApp.move_figure_down(): No column named {col_name}')
+        index = self.figure_cols.index(col_name)
+        if index == 0:
+            return
+        self.figure_cols.pop(index)
+        index = max(0, index-1)
+        self.figure_cols.insert(index, col_name)
+        self.update_active_data()
+
+    def move_figure_down(self, col_name):
+        if col_name not in self.figure_cols:
+            print(f'DisplayApp.move_figure_down(): No column named {col_name}')
+        index = self.figure_cols.index(col_name)
+        if index == len(self.figure_cols)-1:
+            return
+        self.figure_cols.pop(index)
+        index = min(len(self.figure_cols)-1, index+1)
+        self.figure_cols.insert(index, col_name)
+        self.update_active_data()
 
     def open_describe_window(self, series):
         print('DisplayApp.open_describe_window()')
@@ -503,8 +531,18 @@ class DisplayApp(tk.Tk):
 class SeriesContextMenu(tk.Menu):
     def __init__(self, parent, on_aggregate=None, on_describe=None,
                  on_query=None, on_save_figure=None, on_draw=None,
-                 on_delete=None, tearoff=0, **kwargs):
+                 on_delete=None, on_move_up=None, on_move_down=None,
+                 tearoff=0, **kwargs):
         super().__init__(parent, tearoff=tearoff, **kwargs)
+        self.add_command(
+            label='Move up',
+            command=on_move_up
+        )
+        self.add_command(
+            label='Move down',
+            command=on_move_down
+        )
+        self.add_separator()
         intervals = valid_agg_intervals()
         agg_menu = tk.Menu(self)
         for interval in intervals:
