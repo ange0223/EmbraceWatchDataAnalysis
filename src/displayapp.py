@@ -275,10 +275,17 @@ class DisplayApp(tk.Tk):
         return df
 
     def update_active_data(self):
+        print('DisplayApp.update_active_data()')
         if self.data is None:
             self._active_data = None
             return
         df = self.data.copy()
+        # Set index as current datetime column (tz local or UTC)
+        df.index = df[self.datetime_col]
+        # Remove unecessary datetime columns
+        df = df.drop(['Datetime', 'Datetime (UTC)'], axis=1)
+        print('DisplayApp.update_active_data(): initial value of df:')
+        print(df.head())
         # Apply active query if defined
         if self.active_query:
             df = self._query_data(df)
@@ -286,11 +293,14 @@ class DisplayApp(tk.Tk):
         if self.active_datetime_range:
             dt_min, dt_max = self.active_datetime_range
             dt_col = self.datetime_col
-            df = df[(df[dt_col] > dt_min) & (df[dt_col] < dt_max)]
+            #df = df[(df[dt_col] > dt_min) & (df[dt_col] < dt_max)]
+            df = df[((df.index >= dt_min) & (df.index <= dt_max))]
         # Otherwise, use derived range of df
         else:
-            dt_min = min(df[self.datetime_col])
-            dt_max = max(df[self.datetime_col])
+            #dt_min = min(df[self.datetime_col])
+            #dt_max = max(df[self.datetime_col])
+            dt_min = min(df.index)
+            dt_max = max(df.index)
             # Directly accessing _active_datetime_range here to avoid triggering
             #  an additional call to update_active_data
             self._active_datetime_range = (dt_min, dt_max)
@@ -303,24 +313,25 @@ class DisplayApp(tk.Tk):
                     continue
                 df = df.drop(col_name, axis=1)
         # Apply active aggregation interval if defined
-        # Temporarily disabled
-        if False and self.active_agg_interval:
-            # df must have appropriate datetime index
-            print(df.info())
-            print(df.dtypes)
-            df.index = df[self.datetime_col]
-            #df = df.set_index(df[self.datetime_col])
-            # Preserve the indexed column as regular column
-            #df[self.datetime_col] = df.index
-            # Resample by aggregate interval
-            print(df.head())
+        if self.active_agg_interval:
             valid_intervals = valid_agg_intervals()
             default_index = valid_intervals.index(self.default_interval)
             active_index = valid_intervals.index(self.active_agg_interval)
             if active_index < default_index: # upsampling
-                df = df.resample(self.active_agg_interval).ffill()
+                # This can potentially result in an array that is too large to
+                #  allocate sufficient space for
+                try:
+                    df_agg = df.resample(self.active_agg_interval).ffill()
+                except Exception as err:
+                    print('Could not allocate enough memory for upsampling')
+                    print('TODO: Popup to user about memory error')
+                    self._active_agg_interval = self.default_interval
+                else:
+                    df = df_agg
             elif active_index > default_index: # downsampling
                 df = df.resample(self.active_agg_interval).mean()
+            print('DisplayApp.update_active_data(): resampled df:')
+            print(df.head())
             # otherwise: matching - no need to resample
         # Finally, update active data and refresh everything
         self._active_data = df
@@ -402,15 +413,13 @@ class DisplayApp(tk.Tk):
         ignore_cols = {'Datetime', 'Datetime (UTC)', 'Timezone (minutes)',
                        'Unix Timestamp (UTC)', 'subject_id'}
         figure_cols = figure_cols - ignore_cols
-        subject = self.active_data
-        #subject_id = self.active_data['subject_id'].unique()[0]
-        #subject = self.active_data[self.active_data['subject_id'] == subject_id]
         fig_size = (9, 4)
         fig_dpi = 100
         for col_name in sorted(figure_cols):
             fig = Figure(figsize=fig_size, dpi=fig_dpi)
             ax = fig.add_subplot(111)
-            subject.plot(x=self.datetime_col, y=col_name, ax=ax)
+            # Using index as x-axis
+            self.active_data.plot(y=col_name, ax=ax)
             data_plot = FigureCanvasTkAgg(fig,
                     master=self.frame.scrollable_frame)
             self.plots.append(data_plot)
@@ -479,9 +488,9 @@ class DisplayApp(tk.Tk):
         self.active_query = None
 
     def aggregate(self, interval):
+        print(f'DisplayApp.aggregate(): {interval}')
         # This will trigger a call to update_active_data()
         self.active_agg_interval = interval
-        print(f'DisplayApp.aggregate(): {interval}')
 
 
 class SeriesContextMenu(tk.Menu):

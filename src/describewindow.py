@@ -243,13 +243,12 @@ if __name__ == '__main__':
 
     series = 'Movement intensity'
     interval = '30min'
-    time_min = min(data['Datetime'])
-    time_max = max(data['Datetime'])
+    dt_min = min(data['Datetime'])
+    dt_max = max(data['Datetime'])
     dw_data = data[['Datetime', series]]
-    dw_data = dw_data[
-        (dw_data['Datetime'] > time_min)
-        & (dw_data['Datetime'] < time_max)
-    ]
+    dw_data.index = dw_data['Datetime']
+    dw_data = dw_data.drop('Datetime', axis=1)
+    dw_data = dw_data[(dw_data.index > dt_min) & (dw_data.index < dt_max)]
     dw_data = dw_data.set_index('Datetime')
     dw_data = dw_data.resample(rule=interval).mean()
     dw = DescribeWindow()
