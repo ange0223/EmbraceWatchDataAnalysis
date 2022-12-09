@@ -7,6 +7,7 @@ matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from datetime import datetime, timedelta
+import pandas as pd
 import pandasql as ps
 
 from exportwindow import open_save_dialog
@@ -14,7 +15,10 @@ from importwindow import ImportWindow
 from describewindow import DescribeWindow
 from querywindow import QueryWindow
 import common
-from util import str_to_datetime, valid_agg_intervals, save_figure
+from util import (str_to_datetime,
+                  datetime_to_str,
+                  valid_agg_intervals,
+                  save_figure)
 
 
 class DataMenu(Menu):
@@ -70,10 +74,10 @@ class TimeRangeSelector(ttk.Frame):
     def apply(self):
         if not self.apply_callback:
             return
-        dt_min = str_to_datetime(self.time_min_entry.get())
-        dt_max = str_to_datetime(self.time_max_entry.get())
+        dt_min = self.time_min_entry.get()
+        dt_max = self.time_max_entry.get()
         if self.var:
-            var = (dt_min, dt_max)
+            self.var = (dt_min, dt_max)
         if self.apply_callback:
             self.apply_callback(dt_min, dt_max)
 
@@ -121,8 +125,6 @@ class DisplayApp(tk.Tk):
         #self.subject_ids = sorted(list(get_subject_ids(data_path)))
         self.data = None # Fully loaded data
         self.plots = [] # used to easily reference displayed plots
-        self._active_data_bak = None # used for undoing queries
-        self._active_data = None # Subset of data which is plotted and described
         self.describe_window = None
         self.query_window = None
         self.title('Data Analyzer')
@@ -139,6 +141,8 @@ class DisplayApp(tk.Tk):
         self._active_agg_interval = None
         self._active_deleted_cols = None
         self.default_interval = '1min'
+        # Derived subset of self.data (derived via above members)
+        self._active_data = None
 
         menubar = Menu(self)
         data_menu = DataMenu(
@@ -162,8 +166,7 @@ class DisplayApp(tk.Tk):
         time_frame = ttk.Frame(self)
         self.time_selector = TimeRangeSelector(
             time_frame,
-            var=self.active_datetime_range
-            #on_apply=lambda dtr, p=self.active_datetime_range: p=dtr
+            on_apply=self.on_time_range_selector_apply
         )
         self.time_selector.pack(fill=Y, side=LEFT, padx=5, pady=5)
         UTCLabel(time_frame).pack()
@@ -219,6 +222,10 @@ class DisplayApp(tk.Tk):
         self._active_datetime_range = dt_range
         self.update_active_data()
 
+    def on_time_range_selector_apply(self, min_str, max_str):
+        dt_min, dt_max = str_to_datetime(min_str), str_to_datetime(max_str)
+        self.active_datetime_range = (dt_min, dt_max)
+
     @property
     def active_deleted_cols(self):
         return self._active_deleted_cols
@@ -247,7 +254,9 @@ class DisplayApp(tk.Tk):
     def _query_data(self, df=None):
         if df is None:
             df = self.data
+            #df.index = df[self.datetime_col]
         query = self.active_query
+        # Need to preserve datetime columns to use as index later
         # Enforce inclusion of UTC and local datetime columns
         if 'SELECT' in query:
             if 'Datetime' not in query:
@@ -257,7 +266,10 @@ class DisplayApp(tk.Tk):
                                       'SELECT `Datetime (UTC)`, ')
         try:
             def pysqldf(data, q):
-                return ps.sqldf(q, locals())
+                df = ps.sqldf(q, locals())
+                # Preserve index
+                #df.index = df[self.datetime_col]
+                return df
 
             df_queried = pysqldf(df, query)
         except Exception as e:
@@ -280,32 +292,29 @@ class DisplayApp(tk.Tk):
             self._active_data = None
             return
         df = self.data.copy()
-        # Set index as current datetime column (tz local or UTC)
-        df.index = df[self.datetime_col]
-        # Remove unecessary datetime columns
-        df = df.drop(['Datetime', 'Datetime (UTC)'], axis=1)
-        print('DisplayApp.update_active_data(): initial value of df:')
-        print(df.head())
         # Apply active query if defined
         if self.active_query:
-            df = self._query_data(df)
+            df = self._query_data(df=df)
+        # Set index as current datetime column (tz local or UTC)
+        df[self.datetime_col] = pd.to_datetime(df[self.datetime_col])
+        df = df.set_index(df[self.datetime_col])
+        # Remove unecessary datetime columns before attempting aggregation
+        for col_name in {'Datetime', 'Datetime (UTC)'}:
+            if col_name in df.columns:
+                df = df.drop(col_name, axis=1)
         # Apply active_datetime_range if defined
         if self.active_datetime_range:
             dt_min, dt_max = self.active_datetime_range
             dt_col = self.datetime_col
-            #df = df[(df[dt_col] > dt_min) & (df[dt_col] < dt_max)]
             df = df[((df.index >= dt_min) & (df.index <= dt_max))]
         # Otherwise, use derived range of df
         else:
-            #dt_min = min(df[self.datetime_col])
-            #dt_max = max(df[self.datetime_col])
-            dt_min = min(df.index)
-            dt_max = max(df.index)
+            dt_min, dt_max = min(df.index), max(df.index)
             # Directly accessing _active_datetime_range here to avoid triggering
             #  an additional call to update_active_data
             self._active_datetime_range = (dt_min, dt_max)
         # Update GUI to show current datetime range
-        self.time_selector.set(str(dt_min), str(dt_max))
+        self.time_selector.set(datetime_to_str(dt_min), datetime_to_str(dt_max))
         # Apply (remove) any actively deleted columns if defined
         if self.active_deleted_cols:
             for col_name in self.active_deleted_cols:
@@ -330,8 +339,6 @@ class DisplayApp(tk.Tk):
                     df = df_agg
             elif active_index > default_index: # downsampling
                 df = df.resample(self.active_agg_interval).mean()
-            print('DisplayApp.update_active_data(): resampled df:')
-            print(df.head())
             # otherwise: matching - no need to resample
         # Finally, update active data and refresh everything
         self._active_data = df

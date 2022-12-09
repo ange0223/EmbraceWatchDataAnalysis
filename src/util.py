@@ -2,8 +2,12 @@ from datetime import datetime
 from tkinter.filedialog import asksaveasfile
 
 
-def str_to_datetime(string, date_fmt='%Y-%m-%d %H:%M:%S'):
-    return datetime.strptime(string, date_fmt)
+def str_to_datetime(string, dt_fmt='%Y-%m-%d %H:%M:%S'):
+    return datetime.strptime(string, dt_fmt)
+
+
+def datetime_to_str(dt, dt_fmt='%Y-%m-%d %H:%M:%S'):
+    return dt.strftime(dt_fmt)
 
 
 def valid_agg_intervals():
