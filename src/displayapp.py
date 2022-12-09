@@ -126,6 +126,7 @@ class DisplayApp(tk.Tk):
         self.data = None # Fully loaded data
         self.plots = [] # used to easily reference displayed plots
         self.figure_cols = [] # used to track figure order
+        self.figure_styles = [] # used to track figure kind (draw style)
         self.describe_window = None
         self.query_window = None
         self.title('Data Analyzer')
@@ -419,18 +420,23 @@ class DisplayApp(tk.Tk):
         if self.active_data is None:
             return
         # Get column names to show
-        if len(self.figure_cols) == 0:
+        if not len(self.figure_cols) or not len(self.figure_styles):
             ignore_cols = {'Datetime', 'Datetime (UTC)', 'Timezone (minutes)',
                            'Unix Timestamp (UTC)', 'subject_id'}
             figure_cols = set(self.active_data.columns) - ignore_cols
             self.figure_cols = sorted(list(figure_cols))
+            self.figure_styles = ['line']*len(self.figure_cols)
         fig_size = (9, 4)
         fig_dpi = 100
-        for col_name in self.figure_cols:
+        for col_name, draw_style in zip(self.figure_cols, self.figure_styles):
             fig = Figure(figsize=fig_size, dpi=fig_dpi)
             ax = fig.add_subplot(111)
             # Using index as x-axis
-            self.active_data.plot(y=col_name, ax=ax)
+            if draw_style == 'scatter':
+                self.active_data.reset_index().plot.scatter(x=self.datetime_col,
+                                                            y=col_name, ax=ax)
+            else:
+                self.active_data.plot(y=col_name, ax=ax, kind=draw_style)
             data_plot = FigureCanvasTkAgg(fig,
                     master=self.frame.scrollable_frame)
             self.plots.append(data_plot)
@@ -442,13 +448,23 @@ class DisplayApp(tk.Tk):
                 on_describe=lambda c=col_name: self.open_describe_window(c),
                 on_query=lambda : self.open_query_window(),
                 on_save_figure=lambda c=col_name, f=fig: save_figure(f, c),
-                on_draw=lambda : print('on_draw()'),
+                on_draw=lambda ds, c=col_name: self.set_draw_style(c, ds),
                 on_delete=lambda c=col_name: self.delete_series(c),
                 on_move_up=lambda c=col_name: self.move_figure_up(c),
                 on_move_down=lambda c=col_name: self.move_figure_down(c)
             )
             plot_widget.bind('<Button-3>', context_menu.popup)
             plot_widget.pack(fill=X, expand=True)
+
+    def set_draw_style(self, col_name, draw_style):
+        if col_name not in self.figure_cols:
+            print(f'No figure with column name "{col_name}"')
+        index = self.figure_cols.index(col_name)
+        self.figure_styles[index] = draw_style
+        # Directly clear and load plots instead of calling update_active_date()
+        # because the data wasn't altered for this change
+        self.clear_plots()
+        self.load_plots()
 
     def move_figure_up(self, col_name):
         if col_name not in self.figure_cols:
@@ -570,9 +586,32 @@ class SeriesContextMenu(tk.Menu):
             label='Save figure',
             command=on_save_figure
         )
-        self.add_command(
+        draw_styles = {
+            'Scatter': 'scatter',
+            'Line': 'line',
+            'Bar': 'bar',
+            'Horizontal bar': 'barh',
+            'Box': 'box',
+            'Area': 'area',
+            'Histogram': 'hist',
+            'Kernel density estimation': 'kde',
+            'Pie': 'pie',
+            'Hexbin': 'hexbin'
+            # 'Steps line': '',
+            # 'Line with dots': '' ,
+            # 'Line with CI': '',
+            # 'Stacked bar': '',
+            # 'Patch': ''
+        }
+        draw_menu = tk.Menu(self)
+        for name, kind in draw_styles.items():
+            draw_menu.add_command(
+                label=name,
+                command=lambda ds=kind: on_draw(ds)
+            )
+        self.add_cascade(
             label='Draw',
-            command=on_draw
+            menu=draw_menu
         )
         self.add_separator()
         self.add_command(
