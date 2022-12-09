@@ -50,9 +50,10 @@ class TimeEntry(ttk.Entry):
 
 
 class TimeRangeSelector(ttk.Frame):
-    def __init__(self, parent, *args, on_apply=None, **kwargs):
+    def __init__(self, parent, *args, var=None, on_apply=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.apply_callback = on_apply
+        self.var = var
         self.time_min_entry = TimeEntry(self)
         self.time_min_entry.set('')
         self.time_min_entry.pack(side=LEFT, padx=5, pady=5)
@@ -69,9 +70,12 @@ class TimeRangeSelector(ttk.Frame):
     def apply(self):
         if not self.apply_callback:
             return
-        time_min = str_to_datetime(self.time_min_entry.get())
-        time_max = str_to_datetime(self.time_max_entry.get())
-        self.apply_callback(time_min, time_max)
+        dt_min = str_to_datetime(self.time_min_entry.get())
+        dt_max = str_to_datetime(self.time_max_entry.get())
+        if self.var:
+            var = (dt_min, dt_max)
+        if self.apply_callback:
+            self.apply_callback(dt_min, dt_max)
 
     def get(self):
         return self.time_min_entry.get(), self.time_max_entry.get()
@@ -121,13 +125,20 @@ class DisplayApp(tk.Tk):
         self._active_data = None # Subset of data which is plotted and described
         self.describe_window = None
         self.query_window = None
-        self.interval = '1min'
         self.title('Data Analyzer')
         self.geometry('900x600+50+50')
         self.resizable(True, True)
         self.configure(background='#e8f4f8')
         self.utc_mode = False
         self.tz_offset = None
+        # These members have a direct effect on the value of active_data.
+        # Every time one of their values changes self.update_active_data() will
+        # be called, which will apply their values to active_data.
+        self._active_datetime_range = None
+        self._active_query = None
+        self._active_agg_interval = None
+        self._active_deleted_cols = None
+        self.default_interval = '1min'
 
         menubar = Menu(self)
         data_menu = DataMenu(
@@ -151,7 +162,8 @@ class DisplayApp(tk.Tk):
         time_frame = ttk.Frame(self)
         self.time_selector = TimeRangeSelector(
             time_frame,
-            on_apply=self.apply_time_range
+            var=self.active_datetime_range
+            #on_apply=lambda dtr, p=self.active_datetime_range: p=dtr
         )
         self.time_selector.pack(fill=Y, side=LEFT, padx=5, pady=5)
         UTCLabel(time_frame).pack()
@@ -167,12 +179,151 @@ class DisplayApp(tk.Tk):
     def active_data(self):
         return self._active_data
 
-    @active_data.setter
-    def active_data(self, data):
-        '''
-        Need to update several different things when active data changes
-        '''
-        self._active_data = data
+    @property
+    def active_query(self):
+        return self._active_query
+
+    @active_query.setter
+    def active_query(self, query):
+        old_active_query = self._active_query
+        self._active_query = query
+        # New query resets deleted columns
+        self._active_deleted_cols = None
+        # New query resets datetime range
+        # Setting active_datetime_range to None does not trigger a call to
+        #  update_active_data
+        self.active_datetime_range = None
+        self.update_active_data()
+        if self.query_window:
+            # If query existed and was just set to None (undo)
+            if old_active_query and query is None:
+                self.query_window.update_result('Changes reverted')
+            # If query did not exist before and was set to None (undo nothing)
+            if not old_active_query and not query:
+                self.query_window.update_result('Nothing to undo')
+
+    @property
+    def active_datetime_range(self):
+        return self._active_datetime_range
+
+    @active_datetime_range.setter
+    def active_datetime_range(self, dt_range):
+        if dt_range is None:
+            self._active_datetime_range = None
+            return
+        dt_min, dt_max = dt_range
+        if dt_max < dt_min:
+            print('DisplayApp.active_datetime_range.setter(): ', end='')
+            print('  ERROR: min datetime must be less than max datetime')
+            return
+        self._active_datetime_range = dt_range
+        self.update_active_data()
+
+    @property
+    def active_deleted_cols(self):
+        return self._active_deleted_cols
+
+    @active_deleted_cols.setter
+    def active_deleted_cols(self, cols):
+        self._active_deleted_cols = cols
+        self.update_active_data()
+
+    @property
+    def active_agg_interval(self):
+        return self._active_agg_interval
+
+    @active_agg_interval.setter
+    def active_agg_interval(self, interval):
+        if interval not in valid_agg_intervals():
+            print('DisplayApp.active_agg_interval.setter(): ', end='')
+            print(f'  ERROR: invalid agg interval provided: "{interval}"')
+            return
+        # Set to None so resampling isn't performed at all
+        if interval == self.default_interval:
+            self._active_agg_interval = None
+        self._active_agg_interval = interval
+        self.update_active_data()
+
+    def _query_data(self, df=None):
+        if df is None:
+            df = self.data
+        query = self.active_query
+        # Enforce inclusion of UTC and local datetime columns
+        if 'SELECT' in query:
+            if 'Datetime' not in query:
+                query = query.replace('SELECT ', 'SELECT `Datetime`, ')
+            if 'Datetime (UTC)' not in query:
+                query = query.replace('SELECT ',
+                                      'SELECT `Datetime (UTC)`, ')
+        try:
+            def pysqldf(data, q):
+                return ps.sqldf(q, locals())
+
+            df_queried = pysqldf(df, query)
+        except Exception as e:
+            result = f'Query failed to execute:\n{str(e)}'
+        else:
+            df = df_queried
+            result = 'Query ran successfully'
+        finally:
+            # Update query window if present
+            # NOTE - should set to None if window closed (?)
+            if self.query_window:
+                self.query_window.update_result(result)
+                # Lift query window to front
+                self.query_window.wm_transient(self)
+        return df
+
+    def update_active_data(self):
+        if self.data is None:
+            self._active_data = None
+            return
+        df = self.data.copy()
+        # Apply active query if defined
+        if self.active_query:
+            df = self._query_data(df)
+        # Apply active_datetime_range if defined
+        if self.active_datetime_range:
+            dt_min, dt_max = self.active_datetime_range
+            dt_col = self.datetime_col
+            df = df[(df[dt_col] > dt_min) & (df[dt_col] < dt_max)]
+        # Otherwise, use derived range of df
+        else:
+            dt_min = min(df[self.datetime_col])
+            dt_max = max(df[self.datetime_col])
+            # Directly accessing _active_datetime_range here to avoid triggering
+            #  an additional call to update_active_data
+            self._active_datetime_range = (dt_min, dt_max)
+        # Update GUI to show current datetime range
+        self.time_selector.set(str(dt_min), str(dt_max))
+        # Apply (remove) any actively deleted columns if defined
+        if self.active_deleted_cols:
+            for col_name in self.active_deleted_cols:
+                if col_name not in df.columns:
+                    continue
+                df = df.drop(col_name, axis=1)
+        # Apply active aggregation interval if defined
+        # Temporarily disabled
+        if False and self.active_agg_interval:
+            # df must have appropriate datetime index
+            print(df.info())
+            print(df.dtypes)
+            df.index = df[self.datetime_col]
+            #df = df.set_index(df[self.datetime_col])
+            # Preserve the indexed column as regular column
+            #df[self.datetime_col] = df.index
+            # Resample by aggregate interval
+            print(df.head())
+            valid_intervals = valid_agg_intervals()
+            default_index = valid_intervals.index(self.default_interval)
+            active_index = valid_intervals.index(self.active_agg_interval)
+            if active_index < default_index: # upsampling
+                df = df.resample(self.active_agg_interval).ffill()
+            elif active_index > default_index: # downsampling
+                df = df.resample(self.active_agg_interval).mean()
+            # otherwise: matching - no need to resample
+        # Finally, update active data and refresh everything
+        self._active_data = df
         self.clear_plots()
         self.load_plots()
         self.update_describe_window()
@@ -184,28 +335,17 @@ class DisplayApp(tk.Tk):
     def toggle_utc(self):
         print('DisplayApp.toggle_utc()')
         self.utc_mode = not self.utc_mode
-        time_min = str_to_datetime(self.time_selector.get_min())
-        time_max = str_to_datetime(self.time_selector.get_max())
+        # NOTE - should just use active_datetime_range
+        dt_min = str_to_datetime(self.time_selector.get_min())
+        dt_max = str_to_datetime(self.time_selector.get_max())
         if self.utc_mode:
-            time_min -= self.tz_offset
-            time_max -= self.tz_offset
+            dt_min -= self.tz_offset
+            dt_max -= self.tz_offset
         else:
-            time_min += self.tz_offset
-            time_max += self.tz_offset
-        self.time_selector.set(str(time_min), str(time_max))
-        # self.apply_time_range() sets value of self.active_data, which causes
-        # plots to be redrawn and describe window to update (if open). So
-        # there is no need to do those things manually here
-        self.apply_time_range(time_min, time_max)
-
-    def apply_time_range(self, time_min, time_max):
-        print(f'DisplayApp.apply_time_range(): {time_min}, {time_max}')
-        if self.data is None:
-            return
-        self.active_data = self.data[
-            (self.data[self.datetime_col] > time_min)
-            & (self.data[self.datetime_col] < time_max)
-        ]
+            dt_min += self.tz_offset
+            dt_max += self.tz_offset
+        # This will trigger an update to active_data
+        self.active_datetime_range = (dt_min, dt_max)
 
     def open_import_window(self):
         print('DisplayApp.open_import_window()')
@@ -217,16 +357,14 @@ class DisplayApp(tk.Tk):
         print('DisplayApp.on_import_submit()')
         #self.data = load_data(self.data_path, **options)
         self.data = data
-        self.active_data = data.copy()
         self.tz_offset = timedelta(
             minutes=int(self.data['Timezone (minutes)'].iloc[0]))
         self.utc_mode = options['utc_mode']
         self.utc_checkbtn.set(self.utc_mode)
-        time_min = min(self.data[self.datetime_col])
-        time_max = max(self.data[self.datetime_col])
-        self.time_selector.set(str(time_min), str(time_max))
-        self.apply_time_range(time_min, time_max) # will set active_data property
-        #self.load_plots() # this call not needed, because of above line
+        # This will NOT trigger a call to update_active_data()
+        self.active_datetime_range = None
+        # active_datetime_range will be full range of active data after this
+        self.update_active_data()
 
     def open_export_dialog(self):
         print('DisplayApp.open_export_window()')
@@ -244,10 +382,10 @@ class DisplayApp(tk.Tk):
         print('DisplayApp.clear_data()')
         self.data = None
         # Don't use active_data property, otherwise infinite recursion
-        self._active_data = None
         if self.describe_window:
             self.describe_window.destroy()
             self.describe_window = None
+        self.update_active_data()
 
     def clear_plots(self):
         print('DisplayApp.clear_plots()')
@@ -257,7 +395,7 @@ class DisplayApp(tk.Tk):
 
     def load_plots(self):
         print('DisplayApp.load_plots()')
-        if self.data is None:
+        if self.active_data is None:
             return
         # Get column names to show
         figure_cols = set(self.active_data.columns)
@@ -295,7 +433,7 @@ class DisplayApp(tk.Tk):
         if self.describe_window:
             self.describe_window.destroy()
         self.describe_window = DescribeWindow(series)
-        self.describe_window.update_info(self.active_data, self.interval)
+        self.update_describe_window()
 
     def update_describe_window(self):
         print('DisplayApp.update_describe_window()')
@@ -309,11 +447,16 @@ class DisplayApp(tk.Tk):
             # briefly check query result that excludes describe window series
             # before then undoing the query and getting the series back
             return
-        self.describe_window.update_info(self.active_data, self.interval)
+        self.describe_window.update_info(self.active_data,
+                                         self.active_agg_interval)
 
     def delete_series(self, col_name):
         print(f'DisplayApp.delete_series(): {col_name}')
-        self.active_data = self.active_data.drop(col_name, axis=1)
+        if self.active_deleted_cols:
+            del_cols = {col_name} | self.active_deleted_cols
+            self.active_deleted_cols = del_cols
+        else:
+            self.active_deleted_cols = {col_name}
 
     def open_query_window(self):
         print('DisplayApp.open_query_window()')
@@ -327,38 +470,17 @@ class DisplayApp(tk.Tk):
 
     def apply_query(self, query):
         print(f'DisplayApp.apply_query():', query.replace("\n", " "))
-        # create a backup of active data for undo
-        self._active_data_bak = self.active_data
-        def pysqldf(data, q):
-            # Enforce inclusion of UTC and local datetime columns
-            if 'SELECT' in q:
-                if 'Datetime' not in q:
-                    q = q.replace('SELECT ', 'SELECT `Datetime`, ')
-                if 'Datetime (UTC)' not in q:
-                    q = q.replace('SELECT ', 'SELECT `Datetime (UTC)`, ')
-            return ps.sqldf(q, locals())
-        try:
-            df = pysqldf(self.active_data, query)
-        except Exception as e:
-            result = f'Query failed to execute:\n{str(e)}'
-        else:
-            self.active_data = df
-            result = 'Query ran successfully'
-        finally:
-            self.query_window.update_result(result)
-            # Lift query window to front
-            self.query_window.wm_transient(self)
+        # This will trigger a call to update_active_data()
+        self.active_query = query
 
     def undo_query(self):
         print('DisplayApp.undo_query()')
-        if self._active_data_bak is not None:
-            self.active_data = self._active_data_bak
-            self.query_window.update_result('Changes reverted')
-            self._active_data_bak = None
-        else:
-            self.query_window.update_result('No changes have been made')
+        # This will trigger a call to update_active_data()
+        self.active_query = None
 
     def aggregate(self, interval):
+        # This will trigger a call to update_active_data()
+        self.active_agg_interval = interval
         print(f'DisplayApp.aggregate(): {interval}')
 
 
