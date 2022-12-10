@@ -468,7 +468,7 @@ class DisplayApp(tk.Tk):
         if self.active_data is None:
             return
         # Get column names to show
-        if len(self.figure_cols) == 0 or not len(self.figure_kinds) == 0:
+        if len(self.figure_cols) == 0 or len(self.figure_kinds) == 0:
             ignore_cols = {'Datetime', 'Datetime (UTC)', 'Timezone (minutes)',
                            'Unix Timestamp (UTC)', 'subject_id'}
             figure_cols = set(self.active_data.columns) - ignore_cols
@@ -562,7 +562,7 @@ class DisplayApp(tk.Tk):
         if index == len(self.figure_cols)-1:
             return
         self.figure_cols.pop(index)
-        index = min(len(self.figure_cols)-1, index+1)
+        index = min(len(self.figure_cols) , index+1)
         self.figure_cols.insert(index, col_name)
         self.update_active_data()
 
