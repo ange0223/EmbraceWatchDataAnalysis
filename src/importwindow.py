@@ -236,10 +236,8 @@ class ImportWindow(tk.Toplevel):
 
     def on_path_changed(self, *args):
         path = self.path_entry.get()
-        print(f'on_path_changed: path="{path}"')
         # Get grid row of old user_drop
         row = self.user_drop.row
-        print(f'row: {row}')
         # Destory old user_drop
         self.user_drop.destroy()
         try:

@@ -1,14 +1,17 @@
 import tkinter as tk
 from tkinter import ttk, Menu
 from tkinter.constants import *
-from tkinter import messagebox
+import math
 import matplotlib
+import matplotlib as mpl
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.dates as mdates
+import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+import numpy as np
 import pandas as pd
 import pandasql as ps
 
@@ -20,7 +23,8 @@ import common
 from util import (str_to_datetime,
                   datetime_to_str,
                   valid_agg_intervals,
-                  save_figure)
+                  save_figure,
+                  show_error)
 
 
 class DataMenu(Menu):
@@ -60,6 +64,9 @@ class TimeRangeSelector(ttk.Frame):
         super().__init__(*args, **kwargs)
         self.apply_callback = on_apply
         self.var = var
+        # members for storing backups of the entry text
+        self.time_min_bak = ''
+        self.time_max_bak = ''
         self.time_min_entry = TimeEntry(self)
         self.time_min_entry.set('')
         self.time_min_entry.pack(side=LEFT, padx=5, pady=5)
@@ -74,6 +81,7 @@ class TimeRangeSelector(ttk.Frame):
         time_apply_btn.pack(side=LEFT, padx=5, pady=5)
 
     def apply(self):
+        print('TimeRangeSelector.apply()')
         if not self.apply_callback:
             return
         dt_min = self.time_min_entry.get()
@@ -83,16 +91,37 @@ class TimeRangeSelector(ttk.Frame):
         if self.apply_callback:
             self.apply_callback(dt_min, dt_max)
 
+    def restore(self):
+        print('TimeRangeSelector.restore()')
+        self.time_min_entry.set(self.time_min_bak)
+        self.time_max_entry.set(self.time_max_bak)
+
     def get(self):
+        print('TimeRangeSelector.get()')
         return self.time_min_entry.get(), self.time_max_entry.get()
 
     def get_min(self):
+        print('TimeRangeSelector.get_min()')
         return self.time_min_entry.get()
 
+    def set_min(self, time_min):
+        print('TimeRangeSelector.set_min()')
+        self.time_min_bak = self.time_min_entry.get()
+        self.time_min_entry.set(time_min)
+
     def get_max(self):
+        print('TimeRangeSelector.get_max()')
         return self.time_max_entry.get()
 
+    def set_max(self, time_max):
+        print('TimeRangeSelector.set_max()')
+        self.time_max_bak = self.time_max_entry.get()
+        self.time_max_entry.set(time_max)
+
     def set(self, time_min, time_max):
+        print('TimeRangeSelector.set()')
+        self.time_min_bak = self.time_min_entry.get()
+        self.time_max_bak = self.time_max_entry.get()
         self.time_min_entry.set(time_min)
         self.time_max_entry.set(time_max)
 
@@ -120,11 +149,10 @@ class UTCLabel(ttk.Label):
 
 
 class DisplayApp(tk.Tk):
-    def __init__(self):
+    def __init__(self, width=1280, height=800, x_offset=50, y_offset=50):
         super().__init__()
-        # Use provided data_path and data options to load data
-        #self.data_path = data_path
-        #self.subject_ids = sorted(list(get_subject_ids(data_path)))
+        self.width = width
+        self.height = height
         self.data = None # Fully loaded data
         self.plots = [] # used to easily reference displayed plots
         self.figure_cols = [] # used to track figure order
@@ -132,7 +160,7 @@ class DisplayApp(tk.Tk):
         self.describe_window = None
         self.query_window = None
         self.title('Data Analyzer')
-        self.geometry('900x600+50+50')
+        self.geometry(f'{width}x{height}+{x_offset}+{y_offset}')
         self.resizable(True, True)
         self.configure(background='#e8f4f8')
         self.utc_mode = False
@@ -148,6 +176,14 @@ class DisplayApp(tk.Tk):
         # Derived subset of self.data (derived via above members)
         self._active_data = None
 
+        # Configure matplotlib defaults
+        #plt.rcParams['figure.dpi'] = 100 # default value is 100
+        px = 1 / plt.rcParams['figure.dpi'] # pixel in inches
+        fig_width = (self.width-15) * px
+        fig_height = max(1,self.width * px / 4)
+        plt.rcParams['figure.figsize'] = (fig_width, fig_height)
+        plt.rcParams['figure.autolayout'] = True
+
         menubar = Menu(self)
         data_menu = DataMenu(
             menubar,
@@ -155,17 +191,7 @@ class DisplayApp(tk.Tk):
             on_export=self.open_export_dialog,
             on_clear=self.clear_all
         )
-        time_series_menu = TimeSeriesMenu(
-            menubar,
-            on_placeholder=lambda : print('Time Series > Placeholder pressed')
-        )
-        analysis_menu = AnalysisMenu(
-            menubar,
-            on_placeholder=lambda : print('Analysis > Placeholder pressed')
-        )
         menubar.add_cascade(label='Data', menu=data_menu)
-        menubar.add_cascade(label='Time Series', menu=time_series_menu)
-        menubar.add_cascade(label='Analysis', menu=analysis_menu)
         self.config(menu=menubar)
         time_frame = ttk.Frame(self)
         self.time_selector = TimeRangeSelector(
@@ -192,6 +218,7 @@ class DisplayApp(tk.Tk):
 
     @active_query.setter
     def active_query(self, query):
+        print(f'DisplayApp.active_query.setter("{query}")')
         old_active_query = self._active_query
         self._active_query = query
         # New query resets deleted columns
@@ -217,18 +244,23 @@ class DisplayApp(tk.Tk):
 
     @active_datetime_range.setter
     def active_datetime_range(self, dt_range):
+        print(f'DisplayApp.active_datetime_range.setter({dt_range})')
         if dt_range is None:
             self._active_datetime_range = None
             return
         dt_min, dt_max = dt_range
         if dt_max < dt_min:
-            print('DisplayApp.active_datetime_range.setter(): ', end='')
-            print('  ERROR: min datetime must be less than max datetime')
+            # Reset time range selector to previous values
+            self.time_selector.restore()
+            show_error(
+                'Time range error',
+                'Minimum datetime must be less than maximum datetime')
             return
         self._active_datetime_range = dt_range
         self.update_active_data()
 
     def on_time_range_selector_apply(self, min_str, max_str):
+        print('DisplayApp.time_range_selector_apply()')
         dt_min, dt_max = str_to_datetime(min_str), str_to_datetime(max_str)
         self.active_datetime_range = (dt_min, dt_max)
 
@@ -238,6 +270,7 @@ class DisplayApp(tk.Tk):
 
     @active_deleted_cols.setter
     def active_deleted_cols(self, cols):
+        print(f'DisplayApp.active_deleted_cols.setter("{cols}")')
         self._active_deleted_cols = cols
         self.update_active_data()
 
@@ -247,6 +280,7 @@ class DisplayApp(tk.Tk):
 
     @active_agg_interval.setter
     def active_agg_interval(self, interval):
+        print(f'DisplayApp.active_agg_interval.setter("{interval}")')
         if interval not in valid_agg_intervals():
             print('DisplayApp.active_agg_interval.setter(): ', end='')
             print(f'  ERROR: invalid agg interval provided: "{interval}"')
@@ -258,6 +292,7 @@ class DisplayApp(tk.Tk):
         self.update_active_data()
 
     def _query_data(self, df=None):
+        print(f'DisplayApp._query_data(df={repr(df)})')
         if df is None:
             df = self.data
             #df.index = df[self.datetime_col]
@@ -327,6 +362,10 @@ class DisplayApp(tk.Tk):
                 if col_name not in df.columns:
                     continue
                 df = df.drop(col_name, axis=1)
+                if col_name in self.figure_cols:
+                    index = self.figure_cols.index(col_name)
+                    self.figure_cols.pop(index)
+                    self.figure_kinds.pop(index)
         # Apply active aggregation interval if defined
         if self.active_agg_interval:
             valid_intervals = valid_agg_intervals()
@@ -357,7 +396,7 @@ class DisplayApp(tk.Tk):
         return 'Datetime (UTC)' if self.utc_mode else 'Datetime'
 
     def toggle_utc(self):
-        print('DisplayApp.toggle_utc()')
+        print(f'DisplayApp.toggle_utc(): {not self.utc_mode}')
         self.utc_mode = not self.utc_mode
         # NOTE - should just use active_datetime_range
         dt_min = str_to_datetime(self.time_selector.get_min())
@@ -378,8 +417,8 @@ class DisplayApp(tk.Tk):
         top.mainloop()
 
     def on_import_submit(self, data, options):
-        print('DisplayApp.on_import_submit()')
-        #self.data = load_data(self.data_path, **options)
+        print('DisplayApp.on_import_submit(data, options)')
+        self.clear_all()
         self.data = data
         self.tz_offset = timedelta(
             minutes=int(self.data['Timezone (minutes)'].iloc[0]))
@@ -391,9 +430,9 @@ class DisplayApp(tk.Tk):
         self.update_active_data()
 
     def open_export_dialog(self):
-        print('DisplayApp.open_export_window()')
+        print('DisplayApp.open_export_dialog()')
         if self.active_data is None:
-            messagebox.showerror('CSV Error', 'Error: No data to export')
+            show_error('CSV Error', 'No data to export')
         else:
             open_save_dialog(self.active_data)
 
@@ -405,6 +444,13 @@ class DisplayApp(tk.Tk):
     def clear_data(self):
         print('DisplayApp.clear_data()')
         self.data = None
+        self._active_data = None
+        self._active_query = None
+        self._active_datetime_range = None
+        self._active_agg_interval = self.default_interval
+        self.active_deleted_cols = []
+        self.figure_cols = []
+        self.figure_kinds = []
         # Don't use active_data property, otherwise infinite recursion
         if self.describe_window:
             self.describe_window.destroy()
@@ -422,35 +468,54 @@ class DisplayApp(tk.Tk):
         if self.active_data is None:
             return
         # Get column names to show
-        if not len(self.figure_cols) or not len(self.figure_kinds):
+        if len(self.figure_cols) == 0 or not len(self.figure_kinds) == 0:
             ignore_cols = {'Datetime', 'Datetime (UTC)', 'Timezone (minutes)',
                            'Unix Timestamp (UTC)', 'subject_id'}
             figure_cols = set(self.active_data.columns) - ignore_cols
             self.figure_cols = sorted(list(figure_cols))
             self.figure_kinds = ['line'] * len(self.figure_cols)
-        fig_size = (9, 4)
-        fig_dpi = 100
-        for col_name, kind in zip(self.figure_cols, self.figure_kinds):
-            fig = Figure(figsize=fig_size, dpi=fig_dpi)
-            ax = fig.add_subplot(111)
-            # Using index as x-axis
-            if kind == 'scatter':
-                self.active_data.reset_index().plot.scatter(
-                    x=self.datetime_col,
-                    y=col_name,
-                    ax=ax)
-            elif kind == 'bar':
-                self.active_data.reset_index().plot.bar(
-                    x=self.datetime_col,
-                    y=col_name,
-                    ax=ax
-                )
-            elif kind == 'hbar':
-                pass
+
+        for i in range(len(self.figure_cols)):
+            fig0 = Figure()
+            fig1 = Figure()
+            ax1 = fig1.add_subplot(111)
+            ax0 = fig0.add_subplot(111, sharex=ax1)
+            col_name, kind = self.figure_cols[i], self.figure_kinds[i]
+            #print(f'col_name="{col_name}" | kind="{kind}"')
+            if kind == 'line':
+                df = self.active_data[col_name]
+                df.plot(kind=kind, ax=ax0, x_compat=True)
+            elif kind == 'scatter':
+                df = self.active_data.reset_index(names='x')
+                df.plot.scatter(x='x', y=col_name, ax=ax0)
+            elif kind in {'bar', 'hbar'}:
+                df = self.active_data[col_name]
+                df.plot(kind=kind, ax=ax0)
+                # df = df.rolling(window=12).mean().reset_index()
             else:
-                self.active_data.plot(y=col_name, ax=ax, kind=kind)
-            data_plot = FigureCanvasTkAgg(fig,
-                    master=self.frame.scrollable_frame)
+                df = self.active_data[col_name]
+                df.plot(kind=kind, ax=ax0)
+            """
+            locator = mdates.AutoDateLocator(interval_multiples=True)
+            formatter = mdates.ConciseDateFormatter(locator)
+            ax.xaxis.set_major_locator(locator)
+            ax.xaxis.set_major_formatter(formatter)
+            """
+            ax0.set_ylabel(col_name)
+
+            # Last plot create using shared axis is the one that determins the
+            # ticks and labels. So, create a final mock plot that we know will
+            # have nice x-axis ticks and tick labels.
+            df = self.active_data[col_name]
+            df.plot(kind='line', ax=ax1, x_compat=True)
+            locator = mdates.AutoDateLocator(interval_multiples=True)
+            formatter = mdates.ConciseDateFormatter(locator)
+            ax1.xaxis.set_major_locator(locator)
+            ax1.xaxis.set_major_formatter(formatter)
+            # No need to actually draw it or add anything to list of plots
+
+            data_plot = FigureCanvasTkAgg(fig0,
+                                          master=self.frame.scrollable_frame)
             self.plots.append(data_plot)
             data_plot.draw()
             plot_widget = data_plot.get_tk_widget()
@@ -458,8 +523,8 @@ class DisplayApp(tk.Tk):
                 self.frame.scrollable_frame,
                 on_aggregate=self.aggregate,
                 on_describe=lambda c=col_name: self.open_describe_window(c),
-                on_query=lambda : self.open_query_window(),
-                on_save_figure=lambda c=col_name, f=fig: save_figure(f, c),
+                on_query=lambda: self.open_query_window(),
+                on_save_figure=lambda c=col_name, f=fig0: save_figure(f, c),
                 on_draw=lambda ds, c=col_name: self.set_draw_style(c, ds),
                 on_delete=lambda c=col_name: self.delete_series(c),
                 on_move_up=lambda c=col_name: self.move_figure_up(c),
@@ -469,17 +534,16 @@ class DisplayApp(tk.Tk):
             plot_widget.pack(fill=X, expand=True)
 
     def set_draw_style(self, col_name, draw_style):
+        print(f'DisplayApp.set_draw_style("{col_name}", "{draw_style}")')
         if col_name not in self.figure_cols:
             print(f'No figure with column name "{col_name}"')
+            return
         index = self.figure_cols.index(col_name)
         self.figure_kinds[index] = draw_style
         self.update_active_data()
-        # Directly clear and load plots instead of calling update_active_date()
-        # because the data wasn't altered for this change
-        #self.clear_plots()
-        #self.load_plots()
 
     def move_figure_up(self, col_name):
+        print(f'DisplayApp.move_figure_up("{col_name}")')
         if col_name not in self.figure_cols:
             print(f'DisplayApp.move_figure_down(): No column named {col_name}')
         index = self.figure_cols.index(col_name)
@@ -491,6 +555,7 @@ class DisplayApp(tk.Tk):
         self.update_active_data()
 
     def move_figure_down(self, col_name):
+        print(f'DisplayApp.move_figure_down("{col_name}")')
         if col_name not in self.figure_cols:
             print(f'DisplayApp.move_figure_down(): No column named {col_name}')
         index = self.figure_cols.index(col_name)
@@ -524,7 +589,7 @@ class DisplayApp(tk.Tk):
                                          self.active_agg_interval)
 
     def delete_series(self, col_name):
-        print(f'DisplayApp.delete_series(): {col_name}')
+        print(f'DisplayApp.delete_series("{col_name}")')
         if self.active_deleted_cols:
             del_cols = {col_name} | self.active_deleted_cols
             self.active_deleted_cols = del_cols
@@ -542,7 +607,7 @@ class DisplayApp(tk.Tk):
         self.query_window.update_result("")
 
     def apply_query(self, query):
-        print(f'DisplayApp.apply_query():', query.replace("\n", " "))
+        print('DisplayApp.apply_query("{}")'.format(query.replace('\n', ' ')))
         # This will trigger a call to update_active_data()
         self.active_query = query
 
@@ -552,7 +617,7 @@ class DisplayApp(tk.Tk):
         self.active_query = None
 
     def aggregate(self, interval):
-        print(f'DisplayApp.aggregate(): {interval}')
+        print(f'DisplayApp.aggregate("{interval}")')
         # This will trigger a call to update_active_data()
         self.active_agg_interval = interval
 
@@ -607,7 +672,7 @@ class SeriesContextMenu(tk.Menu):
             'Box': 'box',
             'Area': 'area',
             'Histogram': 'hist',
-            'Kernel density estimation': 'kde',
+            # 'Kernel density estimation': 'kde',
             'Pie': 'pie',
             'Hexbin': 'hexbin'
             # 'Steps line': '',
@@ -642,6 +707,16 @@ class SeriesContextMenu(tk.Menu):
 if __name__ == '__main__':
     from data import load_data
     import os
+    import time
+
+    def pause_for_review(secs=2):
+        print('*** Pausing for review ***\n')
+        time.sleep(secs)
+
+    app = DisplayApp()
+
+    # Load initial data as if if import window called back
+    print('Performing initial data load')
     data_path = os.path.join(os.getcwd(), 'Dataset')
     date_fmt = '%Y-%m-%d %H:%M:%S'
     options = {
@@ -658,7 +733,213 @@ if __name__ == '__main__':
         'show_wrist': True
     }
     data = load_data(data_path, **options)
-    app = DisplayApp()
-    # Manually call import submit callback to pass data
     app.on_import_submit(data, options)
+    print('Data submitted via app.on_import_submit()')
+    pause_for_review()
+
+    dt_min, dt_max = '2020-01-17 23:49:00', '2020-01-18 19:06:00'
+    print(f'Applying time range selection: ({dt_min}, {dt_max})')
+    app.time_selector.set(dt_min, dt_max)
+    app.on_time_range_selector_apply(dt_min, dt_min)
+    pause_for_review()
+
+    # Delete all but one series
+    print('Deleting all but one series:', end='')
+    ignore_cols = {'Datetime', 'Datetime (UTC)', 'Timezone (minutes)',
+                   'Unix Timestamp (UTC)', 'subject_id'}
+    cols = sorted(list(set(app.active_data.columns) - ignore_cols))
+    print(f'"{cols[0]}"')
+    done = set()
+    for col in cols:
+        if len(done) == len(cols)-1:
+            break
+        app.delete_series(col)
+        done.add(col)
+    print(f'app.active_data.columns: ({len(app.active_data.columns)}) {set(app.active_data.columns)}')
+    print(f'app.figure_cols: ({len(app.figure_cols)}) {app.figure_cols}')
+    print(f'app.figure_kinds: ({len(app.figure_kinds)}) {app.figure_kinds}')
+    print(f'done: ({len(done)}) {done}')
+    assert(len(set(app.active_data.columns) & done) == 0) # no removed figure cols
+    assert(len(set(app.active_data.columns) & set(cols)) == 1) # only 1 figure col
+    assert(len(app.figure_cols) == 1)
+    assert(len(app.figure_kinds) == 1)
+    print(' PASS')
+    pause_for_review()
+
+    # Try to apply an invalid time range -- an error popup should be shown
+    # and changes to the time range (dt_max < dt_min)
+    print('Attempting to apply an invalid time range')
+    dt_min, dt_max = '2020-01-27 23:49:00', dt_max
+    app.time_selector.set_min(dt_min)
+    app.on_time_range_selector_apply(dt_min, dt_max)
+    pause_for_review()
+
+    # Set time range to something more reasonable
+    print('Setting time range to something reasonable')
+    dt_min, dt_max = '2020-01-17 23:49:00', '2020-01-19 00:00:00'
+    app.time_selector.set(dt_min, dt_max)
+    app.on_time_range_selector_apply(dt_min, dt_max)
+    pause_for_review()
+
+    # Import data, override existing data
+    print('Reimporting data and options')
+    app.on_import_submit(data, options)
+    pause_for_review()
+
+    # Move bottom figure up to top and top figure down to bottom
+    print('Moving bottom figure to top and top figure to bottom')
+    print(f'app.figure_cols: {app.figure_cols}')
+    top_col = app.figure_cols[0]
+    print(f'  top_col: "{top_col}"')
+    bottom_col = app.figure_cols[-1]
+    print(f'  bottom_col: "{bottom_col}"')
+    required_moves = len(app.figure_cols) - 1
+    moves_count = 0
+    while app.figure_cols[0] != bottom_col and app.figure_cols[-1] != top_col:
+        if app.figure_cols[0] != bottom_col:
+            app.move_figure_up(bottom_col)
+        if app.figure_cols[-1] != top_col:
+            app.move_figure_down(top_col)
+        assert(moves_count <= required_moves)
+        moves_count += 1
+    pause_for_review()
+
+    print('Aggregating data')
+    # Aggregate to 6H (6 hours)
+    print('Aggregating to 6H')
+    app.aggregate('6H')
+    pause_for_review()
+    # Then to 1D (1 day)
+    print('Aggregating to 6H')
+    app.aggregate('1D')
+    pause_for_review()
+    # Then to 1S (1 second)
+    print('Aggregating to 6H')
+    app.aggregate('1S')
+    pause_for_review()
+    # Then back to 1min (1 minute)
+    print('Aggregating to 6H')
+    app.aggregate('1min')
+    pause_for_review()
+
+    # Change draw style of first three figures
+    cols = app.figure_cols
+    print(f'Setting draw style of first column "{cols[0]}" to "bar"')
+    app.set_draw_style(cols[0], 'bar')
+    pause_for_review()
+    print(f'Setting draw style of second column "{cols[1]}" to "scatter"')
+    app.set_draw_style(cols[1], 'scatter')
+    pause_for_review()
+    print(f'Setting draw style of third column "{cols[2]} to "barh"')
+    app.set_draw_style((cols[2], 'barh'))
+    pause_for_review()
+
+    # Open query window and manually apply a query
+    cols_prev = set(app.active_data.columns)
+    print('Opening query window')
+    app.open_query_window()
+    pause_for_review()
+    query = 'SELECT `Steps count` FROM data;'
+    print(f'Applying the following query: "{query}"')
+    app.apply_query(query)
+    pause_for_review()
+    print(f' Checking | only queried columns remain:', end='')
+    cols = set(app.active_data.columns) - ignore_cols
+    assert(cols == {'Steps count'})
+    print(' PASS')
+    print(f'Undoing query')
+    dt_min_bak = app.time_selector.time_min_bak
+    dt_max_bak = app.time_selector.time_max_bak
+    dt_min_prev, dt_min_prev = app.time_selector.get()
+    app.undo_query()
+    print(f' Checking | time range reset after undoing query:', end='')
+    assert(app.time_selector.get_min() == dt_min_bak)
+    assert(app.time_selector.get_max() == dt_max_bak)
+    print('PASS')
+    print(f' Checking | deleted cols return after undoing query:', end='')
+    assert(set(app.active_data.columns) == cols_prev)
+    print('PASS')
+    pause_for_review()
+
+    # Open describe window for 'Movement intensity' column
+    print(f'Opening describe window for "Movement intensity"')
+    app.open_describe_window('Movement intensity')
+    pause_for_review()
+    print(f'Setting time range to affect describe window')
+    dt_min, dt_max = '2020-01-17 23:49:00', '2020-01-21 00:00:00'
+    app.time_selector.set(dt_min, dt_max)
+    app.on_time_range_selector_apply(dt_min, dt_max)
+    pause_for_review()
+    print(f'Toggling UTC mode to affect describe window')
+    app.toggle_utc()
+    pause_for_review()
+    print(f'Toggling UTC mode back to affect describe window')
+    app.toggle_utc()
+    pause_for_review()
+    print('Aggregating to 6H to affect describe window')
+    app.aggregate('6H')
+    pause_for_review()
+    print('Aggregating back to 1min')
+    app.aggregate('1min')
+    pause_for_review()
+    print('Querying on data (removing described series)')
+    app.apply_query(query)
+    pause_for_review()
+    print('Undoing query')
+    app.undo_query()
+    pause_for_review()
+    print('Querying on data (modifying described series)')
+    query = """SELECT `Movement intensity`
+FROM data
+WHERE `Movement intensity` < 60;"""
+    print(' query={}'.format(query.replace('\n', '')))
+    app.query_window.query_entry.set(1.0, query)
+    app.apply_query(query)
+    pause_for_review()
+    print('Undoing query')
+    app.undo_query()
+    pause_for_review()
+
+    # Clear all
+    print('Clearing all data and plots')
+    app.clear_all()
+    pause_for_review()
+
+    # Reimport data
+    print('Reloading data')
+    app.on_import_submit(data, options)
+    pause_for_review()
+
+    # Export data
+    export_path = os.path.join(os.getcwd(), '..', 'tmp', 'untitled.csv')
+    print(f'Export data. Save to "{export_path}" for validation:', end='')
+    app.open_export_dialog()
+    assert(os.path.exists(export_path))
+    assert(os.path.isfile(export_path))
+    export_size = os.path.getsize(export_path)
+    assert(export_size > 0)
+    print(' PASS')
+    print(f'Exported file size: {export_size} bytes')
+    pause_for_review()
+
+    # Save figure
+    print('Save a figure')
+    save_path = os.path.join(os.path.getcwd(), '..', 'tmp',
+                             'Movement intensity.png')
+    print('Please wait. Moving "Movement intensity" figure to top...', end='')
+    # First, move 'Movement intensity' to top
+    assert('Movement intensity' in app.figure_cols)
+    while app.figure_cols[0] != 'Movement intensity':
+        app.move_figure_up('Movement intensity')
+    print(' Done')
+    print(f'Please save "Movement intensity" figure to "{save_path}"', end='')
+    print(' for validation:')
+    assert (os.path.exists(save_path))
+    assert (os.path.isfile(save_path))
+    saved_size = os.path.getsize(save_path)
+    assert (saved_size > 0)
+    print(' PASS')
+    print(f'Saved image file size: {saved_size} bytes')
+    pause_for_review()
+
     app.mainloop()

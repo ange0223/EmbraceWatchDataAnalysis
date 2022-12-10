@@ -1,5 +1,6 @@
 from datetime import datetime
 from tkinter.filedialog import asksaveasfile
+from tkinter import messagebox
 
 
 def str_to_datetime(string, dt_fmt='%Y-%m-%d %H:%M:%S'):
@@ -23,3 +24,7 @@ def save_figure(figure, init_filename='untitled.png'):
         defaultextension=".png")
     if save_path:
         figure.savefig(save_path.name)
+
+
+def show_error(title, msg):
+    messagebox.showerror(title, f'Error: {msg}')
