@@ -698,13 +698,13 @@ class SeriesContextMenu(tk.Menu):
             'Scatter': 'scatter',
             'Line': 'line',
             'Bar': 'bar',
-            'Horizontal bar': 'barh',
-            'Box': 'box',
-            'Area': 'area',
-            'Histogram': 'hist',
+            #'Horizontal bar': 'barh',
+            #'Box': 'box',
+            'Area': 'area'
+            # 'Histogram': 'hist',
             # 'Kernel density estimation': 'kde',
-            'Pie': 'pie',
-            'Hexbin': 'hexbin'
+            # 'Pie': 'pie',
+            # 'Hexbin': 'hexbin'
             # 'Steps line': '',
             # 'Line with dots': '' ,
             # 'Line with CI': '',
@@ -737,9 +737,26 @@ class SeriesContextMenu(tk.Menu):
 if __name__ == '__main__':
     from data import load_data
     import os
-    import time
-
-
 
     app = DisplayApp()
+    # Load initial data as if if import window called back
+    print('Performing initial data load')
+    data_path = os.path.join(os.getcwd(), 'Dataset')
+    date_fmt = '%Y-%m-%d %H:%M:%S'
+    options = {
+        'users': 310,
+        'start_time': datetime.strptime('2020-01-17 23:48:00', date_fmt),
+        'end_time': datetime.strptime('2022-01-17 23:48:00', date_fmt),
+        'utc_mode': False,
+        'show_acc': True,
+        'show_eda': True,
+        'show_temp': True,
+        'show_movement': True,
+        'show_step': True,
+        'show_rest': True,
+        'show_wrist': True
+    }
+    data = load_data(data_path, **options)
+    app.on_import_submit(data, options)
+    app.mainloop()
 
