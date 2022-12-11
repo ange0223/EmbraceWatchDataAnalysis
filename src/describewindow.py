@@ -195,15 +195,17 @@ class DescriptionFrame(ttk.LabelFrame):
 
 
 class DescribeWindow(tk.Toplevel):
-    def __init__(self, series):
+    def __init__(self, series, on_quit=None):
         super().__init__()
         self.title('Description')
         self.geometry('900x600+100+100')
         self.series = series
+        self.on_quit = on_quit
         self.source_frame = SourceFrame(self)
         self.source_frame.pack()
         self.description_frame = DescriptionFrame(self)
         self.description_frame.pack()
+        self.protocol('WM_DELETE_WINDOW', self.on_quit)
 
     def update_info(self, data, interval, agg_metric='mean'):
         self.source_frame.update_info(self.series, interval, agg_metric)

@@ -12,8 +12,18 @@ def datetime_to_str(dt, dt_fmt='%Y-%m-%d %H:%M:%S'):
 
 
 def valid_agg_intervals():
-    return ('1ms', '5ms', '50ms', '500ms', '1S', '1min', '30min', '1H',
-            '3H', '6H', 'D', 'W')
+    return (  # '1ms',
+            # '5ms',
+            '50ms',
+            '500ms',
+            '1S',
+            '1min',
+            '30min',
+            '1H',
+            '3H',
+            '6H',
+            'D',
+            'W')
 
 
 def save_figure(figure, init_filename='untitled.png'):

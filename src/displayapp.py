@@ -525,6 +525,7 @@ class DisplayApp(tk.Tk):
             elif kind == 'bar':
                 df = self.active_data[col_name]
                 df.plot(kind=kind, ax=ax0, color=color)
+
                 # df = df.rolling(window=12).mean().reset_index()
             else: # area
                 df = self.active_data[col_name]
@@ -604,8 +605,14 @@ class DisplayApp(tk.Tk):
         print('DisplayApp.open_describe_window()')
         if self.describe_window:
             self.describe_window.destroy()
-        self.describe_window = DescribeWindow(series)
+        self.describe_window = DescribeWindow(
+            series,
+            on_quit=self.describe_window_closed)
         self.update_describe_window()
+
+    def describe_window_closed(self):
+        self.describe_window.destroy()
+        self.describe_window = None
 
     def update_describe_window(self):
         print('DisplayApp.update_describe_window()')
