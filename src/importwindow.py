@@ -6,9 +6,9 @@ from tkinter.constants import *
 from tkinter import ttk, Menu
 import os
 
-import common
-from data import get_subject_ids, load_data
-from util import str_to_datetime
+from . import common
+from .data import get_subject_ids, load_data
+from .util import str_to_datetime
 
 
 class Label(ttk.Label):
@@ -291,6 +291,7 @@ class ImportWindow(tk.Toplevel):
         return user_input
 
     def submit(self):
+        self.submit_btn['state'] = DISABLED
         options = self.get_options()
         data_path = self.path_entry.get()
         data = load_data(data_path, **options)

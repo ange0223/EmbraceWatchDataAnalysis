@@ -17,10 +17,11 @@ class Button(ttk.Button):
 
 
 class QueryWindow(tk.Toplevel):
-    def __init__(self, on_apply=None, on_undo=None):
+    def __init__(self, on_apply=None, on_undo=None, on_quit=None):
         super().__init__()
         self.on_apply = on_apply
         self.on_undo = on_undo
+        self.on_quit = on_quit
         self.title('Query')
         self.geometry('500x600+100+100')
 
@@ -44,14 +45,15 @@ class QueryWindow(tk.Toplevel):
         self.apply_btn = Button(btn_frame, text='Apply',
                                 command=self.apply)
         self.apply_btn.pack(side=tk.RIGHT)
+        self.protocol('WM_DELETE_WINDOW', self.on_quit)
 
     def apply(self):
         query = self.query_entry.get('1.0', 'end-1c')
         self.on_apply(query)
 
     def update_result(self, string):
-        self.result_entry.delete(1.0, END)
-        self.result_entry.insert(1.0, string)
+        self.result_entry.delete('1.0', "end")
+        self.result_entry.insert('1.0', string)
 
     def undo(self):
         self.on_undo()
