@@ -400,18 +400,35 @@ class DisplayApp(tk.Tk):
 
     def toggle_utc(self):
         print(f'DisplayApp.toggle_utc(): {not self.utc_mode}')
-        self.utc_mode = not self.utc_mode
         # NOTE - should just use active_datetime_range
-        dt_min = str_to_datetime(self.time_selector.get_min())
-        dt_max = str_to_datetime(self.time_selector.get_max())
-        if self.utc_mode:
-            dt_min -= self.tz_offset
-            dt_max -= self.tz_offset
+        if self.data is None:
+            show_error('UTC Toggle Error',
+                       'No data loaded!')
+            self.utc_checkbtn.toggle()
+            return
+        try:
+            dt_min = str_to_datetime(self.time_selector.get_min())
+            dt_max = str_to_datetime(self.time_selector.get_max())
+            if dt_max < dt_min:
+                raise Exception('Invalid time range selected!')
+        except ValueError as err:
+            show_error('UTC Toggle Error',
+                       'Invalid time range selected')
+            self.utc_checkbtn.toggle()
+        except Exception as err:
+            show_error('Time Range Error',
+                       str(err))
+            self.utc_checkbtn.toggle()
         else:
-            dt_min += self.tz_offset
-            dt_max += self.tz_offset
-        # This will trigger an update to active_data
-        self.active_datetime_range = (dt_min, dt_max)
+            self.utc_mode = not self.utc_mode
+            if self.utc_mode:
+                dt_min -= self.tz_offset
+                dt_max -= self.tz_offset
+            else:
+                dt_min += self.tz_offset
+                dt_max += self.tz_offset
+            # This will trigger an update to active_data
+            self.active_datetime_range = (dt_min, dt_max)
 
     def open_import_window(self):
         print('DisplayApp.open_import_window()')

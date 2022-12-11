@@ -35,3 +35,6 @@ class Checkbutton(ttk.Checkbutton):
 
     def set(self, val):
         self._var.set(val)
+
+    def toggle(self):
+        self.set(1 - self.get())
