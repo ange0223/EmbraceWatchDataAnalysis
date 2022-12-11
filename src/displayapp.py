@@ -157,6 +157,15 @@ class DisplayApp(tk.Tk):
         self.plots = [] # used to easily reference displayed plots
         self.figure_cols = [] # used to track figure order
         self.figure_kinds = [] # used to track figure kind (draw style)
+        self.series_colors = {
+            'Acc magnitude avg': '#bb0033', # red
+            'Eda avg': '#6195ed', # blue
+            'Temp avg': '#ffdd22', # orange
+            'Movement intensity': '#41bc66', # green
+            'Steps count': '#225566', # navy blue
+            'Rest': '#663377', # purple
+            'On Wrist': '#000033' # deep blue-black
+        }
         self.describe_window = None
         self.query_window = None
         self.title('Data Analyzer')
@@ -505,20 +514,21 @@ class DisplayApp(tk.Tk):
             ax1 = fig1.add_subplot(111)
             ax0 = fig0.add_subplot(111, sharex=ax1)
             col_name, kind = self.figure_cols[i], self.figure_kinds[i]
-            #print(f'col_name="{col_name}" | kind="{kind}"')
+            color = self.series_colors[col_name]
+
             if kind == 'line':
                 df = self.active_data[col_name]
-                df.plot(kind=kind, ax=ax0, x_compat=True)
+                df.plot(kind=kind, ax=ax0, x_compat=True, color=color)
             elif kind == 'scatter':
                 df = self.active_data.reset_index(names='x')
-                df.plot.scatter(x='x', y=col_name, ax=ax0)
-            elif kind in {'bar', 'hbar'}:
+                df.plot.scatter(x='x', y=col_name, ax=ax0, color=color)
+            elif kind == 'bar':
                 df = self.active_data[col_name]
-                df.plot(kind=kind, ax=ax0)
+                df.plot(kind=kind, ax=ax0, color=color)
                 # df = df.rolling(window=12).mean().reset_index()
-            else:
+            else: # area
                 df = self.active_data[col_name]
-                df.plot(kind=kind, ax=ax0)
+                df.plot(kind=kind, ax=ax0, color=color)
             """
             locator = mdates.AutoDateLocator(interval_multiples=True)
             formatter = mdates.ConciseDateFormatter(locator)
