@@ -8,7 +8,7 @@ import os
 
 import common
 from data import get_subject_ids, load_data
-from util import str_to_datetime
+from util import str_to_datetime, show_error
 
 
 class Label(ttk.Label):
@@ -149,14 +149,14 @@ class ImportWindow(tk.Toplevel):
         start_label = Label(self, text='Date Start:')
         start_label.grid(row=curr_row)
         self.start_entry = Entry(self)
-        self.start_entry.insert(0, '2020-01-17 23:48:00')
+        self.start_entry.insert(0, '2020-01-16 00:00:00')
         self.start_entry.grid(row=curr_row)
         curr_row += 1
 
         end_label = Label(self, text='Date End:')
         end_label.grid(row=curr_row)
         self.end_entry = Entry(self)
-        self.end_entry.insert(0, '2022-01-17 23:48:00')
+        self.end_entry.insert(0, '2020-01-22 00:00:00')
         self.end_entry.grid(row=curr_row)
         curr_row += 1
 
@@ -290,8 +290,40 @@ class ImportWindow(tk.Toplevel):
         }
         return user_input
 
-    def submit(self):
+    def lift(self):
+        # Lift self back to front
+        self.wm_attributes('-topmost', True)
+
+    def enable_submit(self):
+        self.submit_btn['state'] = NORMAL
+
+    def disable_submit(self):
         self.submit_btn['state'] = DISABLED
+
+    def submit(self):
+        self.disable_submit()
+        try:
+            start_time = str_to_datetime(self.start_entry.get())
+        except ValueError:
+            show_error('Time Range Error',
+                       'Invalid start value provided!')
+            self.lift()
+            self.enable_submit()
+            return
+        try:
+            end_time = str_to_datetime(self.end_entry.get())
+        except ValueError:
+            show_error('Time Range Error',
+                       'Invalid end time provided!')
+            self.lift()
+            self.enable_submit()
+            return
+        if end_time < start_time:
+            show_error('Time Range Error',
+                       'Start time must be less than stop time!')
+            self.lift()
+            self.enable_submit()
+            return
         options = self.get_options()
         data_path = self.path_entry.get()
         data = load_data(data_path, **options)
