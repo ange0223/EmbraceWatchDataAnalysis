@@ -6,9 +6,9 @@ from tkinter.constants import *
 from tkinter import ttk, Menu
 import os
 
-from . import common
-from .data import get_subject_ids, load_data
-from .util import str_to_datetime
+import common
+from data import get_subject_ids, load_data
+from util import str_to_datetime
 
 
 class Label(ttk.Label):

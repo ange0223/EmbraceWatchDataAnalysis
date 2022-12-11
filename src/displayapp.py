@@ -15,12 +15,12 @@ import numpy as np
 import pandas as pd
 import pandasql as ps
 
-from .exportwindow import open_save_dialog
-from .importwindow import ImportWindow
-from .describewindow import DescribeWindow
-from .querywindow import QueryWindow
-from . import common
-from .util import (str_to_datetime,
+from exportwindow import open_save_dialog
+from importwindow import ImportWindow
+from describewindow import DescribeWindow
+from querywindow import QueryWindow
+import common
+from util import (str_to_datetime,
                   datetime_to_str,
                   valid_agg_intervals,
                   save_figure,

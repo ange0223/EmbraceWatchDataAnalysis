@@ -73,6 +73,7 @@ class SourceFrame(ttk.LabelFrame):
         self.refresh_btn.pack(side=LEFT)
         top_frame.pack(expand=False, fill=X, side=TOP)
         bottom_frame = ttk.Frame(self)
+        """
         NameLabel(bottom_frame, text='Data: ').pack()
         # NOTE - configure different options for data dropdown
         self.data_drop = DropDown(
@@ -91,6 +92,7 @@ class SourceFrame(ttk.LabelFrame):
             ['None']
         )
         self.groupby_drop.pack()
+        """
         bottom_frame.pack(expand=False, fill=BOTH, side=TOP)
 
     def refresh(self):
