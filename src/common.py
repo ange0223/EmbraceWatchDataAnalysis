@@ -1,20 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-from datetime import datetime
-
-
-DATE_FMT = '%Y-%m-%d %H:%M:%S'
-
-
-def str_to_datetime(string):
-    return datetime.strptime(string, DATE_FMT)
-
-
-class ToplevelWindow(tk.Toplevel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.resizable(False, False)
-        self.configure(background='#e8f4f8')
 
 
 class ScrollableLabelFrame(ttk.LabelFrame):
@@ -50,3 +35,6 @@ class Checkbutton(ttk.Checkbutton):
 
     def set(self, val):
         self._var.set(val)
+
+    def toggle(self):
+        self.set(1 - self.get())
