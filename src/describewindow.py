@@ -65,34 +65,8 @@ class SourceFrame(ttk.LabelFrame):
         NameLabel(top_frame, text='Aggregate metric: ').pack()
         self.agg_metric_lbl = ValueLabel(top_frame, text='agg_metric')
         self.agg_metric_lbl.pack()
-        self.refresh_btn = ttk.Button(
-            top_frame,
-            text='Refresh',
-            command=self.refresh
-        )
-        self.refresh_btn.pack(side=LEFT)
         top_frame.pack(expand=False, fill=X, side=TOP)
         bottom_frame = ttk.Frame(self)
-        """
-        NameLabel(bottom_frame, text='Data: ').pack()
-        # NOTE - configure different options for data dropdown
-        self.data_drop = DropDown(
-            bottom_frame,
-            tk.StringVar(),
-            'all',
-            ['all']
-        )
-        self.data_drop.pack()
-        NameLabel(bottom_frame, text='Groupby: ').pack()
-        # NOTE - configure different options for groupby dropdown
-        self.groupby_drop = DropDown(
-            bottom_frame,
-            tk.StringVar(),
-            'None',
-            ['None']
-        )
-        self.groupby_drop.pack()
-        """
         bottom_frame.pack(expand=False, fill=BOTH, side=TOP)
 
     def refresh(self):
